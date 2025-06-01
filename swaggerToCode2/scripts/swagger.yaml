@@ -1,0 +1,767 @@
+openapi: 3.0.0
+info:
+  title: Wabulator Web API
+  description: API for managing and monitoring Wabulator state and configuration
+  version: 1.0.0
+servers:
+  - url: /
+    description: The Wabulator web server
+paths:
+  /api/config:
+    get:
+      summary: Get Wabulator configuration
+      description: Retrieves the current Wabulator configuration
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WabConfig'
+        '400':
+          description: Invalid configuration
+  /api/config/update:
+    post:
+      summary: Update Wabulator configuration
+      description: Updates the Wabulator configuration settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WabConfig'
+      responses:
+        '200':
+          description: Configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WabConfig'
+        '400':
+          description: Invalid configuration
+  /api/wabulator-detail:
+    get:
+      summary: Get Wabulator details
+      description: Retrieves details for a specific Wabulator or all Wabulators if no ID is provided
+      parameters:
+        - name: wab_id
+          in: query
+          description: ID of the Wabulator to get details for
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WabulatorDetailsList'
+        '404':
+          description: Wabulator not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Wabulator not found"
+  /api/events/wabulator-state:
+    get:
+      summary: Wabulator state events
+      description: Server-Sent Events endpoint for real-time Wabulator state updates
+      responses:
+        '200':
+          description: SSE stream established
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/EventStream"
+
+components:
+  schemas:
+    WebServerConfig:
+      type: object
+      description: Configuration settings for the Wabulator web server
+      properties:
+        assets-path:
+          type: string
+          description: Path to the web server assets (index.html for instance)
+          example: "./assets"
+        port:
+          type: integer
+          description: Port number for the web server
+          example: 8080
+
+    MongoConfig:
+      type: object
+      description: Configuration for MongoDB connection
+      required:
+        - url
+        - db
+      properties:
+        url:
+          type: string
+          description: MongoDB connection string
+          example: "mongodb://localhost:27017"
+        db:
+          type: string
+          description: Database name
+          example: "replay"
+        collection:
+          type: string
+          description: MongoDB username (if authentication is enabled)
+          example: "messages2025-05-19T00-20"
+
+    Appenders:
+      type: object
+      description: "Configuration for a logging appender"
+      properties:
+        name:
+          type: string
+          description: "Name of the appender"
+          example: "console"
+        type:
+          type: string
+          description: "Type of the appender"
+          example: "console"
+        writeToStdout:
+          type: boolean
+          description: "Whether to write log messages to standard output"
+          default: false
+        flushStdout:
+          type: boolean
+          description: "Whether to flush standard output after writing log messages"
+          default: false
+        address:
+          type: string
+          description: "Network address for network-based appenders"
+          example: "127.0.0.1"
+        port:
+          type: integer
+          format: int32
+          description: "Network port for network-based appenders"
+          example: 514
+        flush:
+          type: boolean
+          description: "Whether to flush after each log message"
+          default: false
+        file:
+          type: string
+          description: "Path to log file for file-based appenders"
+          example: "/var/log/wabulator.log"
+        size:
+          type: integer
+          format: int32
+          description: "Maximum size of log file in bytes before rotation"
+          example: 10485760
+        rotate:
+          type: integer
+          format: int32
+          description: "Number of rotated log files to keep"
+          example: 5
+      additionalProperties: false
+      required:
+        - name
+        - type
+      x-examples:
+        consoleAppender:
+          name: "console"
+          type: "console"
+          writeToStdout: true
+          flushStdout: true
+        fileAppender:
+          name: "file"
+          type: "file"
+          file: "/var/log/wabulator.log"
+          size: 10485760
+          rotate: 5
+          flush: true
+        networkAppender:
+          name: "syslog"
+          type: "network"
+          address: "10.0.0.1"
+          port: 514
+          flush: true
+
+    Rules:
+      type: object
+      description: "Rules that determine which appenders receive log messages from which sources"
+      properties:
+        appender:
+          type: string
+          description: "Name of the appender to which this rule applies"
+          example: "console"
+        sources:
+          type: array
+          description: "List of logging sources that will be directed to the appender"
+          items:
+            type: string
+          example: ["wabulator", "wabette", "network"]
+      additionalProperties: false
+      required:
+        - appender
+        - sources
+      x-examples:
+        consoleRule:
+          appender: "console"
+          sources: ["wabulator", "network"]
+        fileRule:
+          appender: "file"
+          sources: ["wabulator", "wabette", "database"]
+
+    Logging:
+      type: object
+      description: "Overall logging configuration"
+      properties:
+        appenders:
+          type: array
+          description: "List of configured appenders"
+          items:
+            $ref: '#/components/schemas/Appenders'
+        rules:
+          type: array
+          description: "List of rules for routing log messages"
+          items:
+            $ref: '#/components/schemas/Rules'
+      additionalProperties: false
+      required:
+        - appenders
+        - rules
+      x-examples:
+        defaultConfig:
+          appenders:
+            - name: "console"
+              type: "console"
+              writeToStdout: true
+              flushStdout: true
+            - name: "file"
+              type: "file"
+              file: "/var/log/wabulator.log"
+              size: 10485760
+              rotate: 5
+              flush: true
+          rules:
+            - appender: "console"
+              sources: ["wabulator", "network"]
+            - appender: "file"
+              sources: ["wabulator", "wabette", "database"]
+
+    CougarConfig:
+      type: object
+      description: Configuration for Cougar integration
+      required:
+        - path
+        - port
+        - transport
+      properties:
+        path:
+          type: string
+          description: Cougar server host
+          example: "cougar-server.local"
+        port:
+          type: integer
+          description: Cougar server port
+          example: 9090
+        transport:
+          type: string
+          oneOf:
+            - $ref: '#/components/schemas/TransportType'
+          description: Type of transport connection to make
+          example: 'socket'
+
+    CougarDbConfig:
+      type: object
+      description: Configuration for Cougar database connection
+      required:
+        - CougarDbConnection64
+        - odbc-version
+      properties:
+        CougarDbConnection64:
+          type: string
+          description: Obfuscated SQL server connection string (will typically reference a predefined ODBC connection name)
+          example: "44534E3D436F7567617236343B5549443D6462613B5057443D707178792821256B"
+        CougarDbDSN64:
+          type: string
+          description: DSN of above
+          example: 'cougar-db-r'
+        odbc-version:
+          type: string
+          description: odbc version
+          example: "ODBC380"
+        Mongo:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/MongoConfig'
+          description: Mongo connection if cougar db not to be used
+          example: ""
+
+    ControlConfig:
+      type: object
+      description: Configuration for Wabulator control settings
+      required:
+        - type
+        - startType
+        - port
+        - transport
+      properties:
+        type:
+          type: string
+          oneOf:
+            - $ref: '#/components/schemas/WabulatorControlType'
+          description: Determines the way the wabulator runs
+          example: 'stand-alone'
+        startType:
+          type: string
+          description: How to start the wabulator
+          example: 'auto'
+        port:
+          type: integer
+          description: server or client connection port
+          example: 812
+        transport:
+          type: string
+          oneOf:
+            - $ref: '#/components/schemas/TransportType'
+          description: Transport typoe
+          example: 'asio-socket'
+
+    Config:
+      type: object
+      description: Configuration for the Wabulator system
+      properties:
+        mongo:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/MongoConfig'
+          description: MongoDB configuration settings
+        cougarDb:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/CougarDbConfig'
+          description: Cougar database configuration
+        cougar:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/CougarConfig'
+          description: Cougar system configuration
+        replayMode:
+          type: boolean
+          description: Whether the system is operating in replay mode
+          example: false
+        isMaster:
+          type: boolean
+          description: Whether this instance is the master node
+          example: true
+        startReplay:
+          type: string
+          format: date-time
+          description: Start time for replay operations
+          example: "2023-06-15T14:30:00Z"
+        endReplay:
+          type: string
+          format: date-time
+          description: End time for replay operations
+          example: "2023-06-15T16:30:00Z"
+        siteLimit:
+          type: integer
+          format: int32
+          description: Maximum number of sites allowed
+          example: 100
+        sitesPerWab:
+          type: integer
+          format: int32
+          description: Number of sites allocated per Wabulator
+          example: 10
+        wabsPerThread:
+          type: integer
+          format: int32
+          description: Number of Wabettes per thread - no interpretted as number of threads allocated to the asio runtime
+          example: 5
+        preferCssSites:
+          type: boolean
+          description: Whether to prefer CSS sites in allocation
+          example: true
+        preferGroupSites:
+          type: boolean
+          description: Whether to prefer group sites in allocation
+          example: false
+        preferNonCssSites:
+          type: boolean
+          description: Whether to prefer non-CSS sites in allocation
+          example: false
+        replayRate:
+          type: number
+          format: double
+          description: Speed multiplier for replay operations
+          example: 1.5
+        initialBuffer:
+          type: integer
+          format: int32
+          description: Initial buffer size in milliseconds
+          example: 60
+        replaySites:
+          type: array
+          description: List of site IDs to include in replay (empty or [-1] means all sites)
+          items:
+            type: integer
+            format: int32
+          example: [ 101, 102, 103 ]
+      x-examples:
+        default:
+          mongo:
+            connectionString: "mongodb://localhost:27017"
+            database: "wabulator"
+          cougarDb:
+            host: "localhost"
+            port: 5432
+            database: "cougar_db"
+            username: "cougar_user"
+            password: "********"
+          cougar:
+            host: "cougar-server"
+            port: 9090
+          replayMode: true
+          isMaster: true
+          startReplay: "2023-06-15T14:30:00Z"
+          endReplay: "2023-06-15T16:30:00Z"
+          siteLimit: 50
+          sitesPerWab: 10
+          wabsPerThread: 5
+          preferCssSites: true
+          preferGroupSites: false
+          preferNonCssSites: false
+          replayRate: 1.0
+          initialBuffer: 30
+          replaySites: [ -1 ]
+
+    WabConfig:
+      type: object
+      description: Overall Wabulator configuration containing all settings
+      required:
+        - mode
+        - id
+        - config
+        - mongo
+        - control
+      properties:
+        mode:
+          type: string
+          description: To be deprecated
+          example: 'replay'
+        id:
+          type: string
+          description: Id of the wabulator - if this is a client then this will include the range of wabette site ids
+          example: 'wab-44-31580'
+        transformDlls:
+          type: array
+          description: List of dlls to load with transform methods (transform recorded messages to something else)
+          items:
+            type: string
+          example: [ 'transform.dll' ]
+        config:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Config'
+        webServer:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/WebServerConfig'
+        mongo:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/MongoConfig'
+        logging:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Logging'
+        control:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/ControlConfig'
+
+    # Enum for Wabulator States
+    WabulatorState:
+      type: string
+      description: Valid states for a Wabulator
+      enum:
+        - "NONE"
+        - "INITIALISING"
+        - "INITIALISED"
+        - "CONNECTING"
+        - "CONNECTED"
+        - "PARTIALLY_CONNECTED"
+        - "PREPARING"
+        - "PREPARED"
+        - "STARTING"
+        - "RUNNING"
+        - "PAUSING"
+        - "PAUSED"
+        - "RESUMING"
+        - "STOPPING"
+        - "STOPPED"
+        - "COMPLETED"
+        - "TERMINATING"
+        - "TERMINATED"
+      example: "RUNNING"
+
+    # Enum for Transport Type
+    TransportType:
+      type: string
+      description: Valid transport types for POM connection
+      enum:
+        - "rpc"
+        - "socket"
+        - "asio-socket"
+      example: "socket"
+
+    # Enum for Transport Type
+    WabulatorControlType:
+      type: string
+      description: Valid control config types
+      enum:
+        - "server"
+        - "stand-alone"
+        - "client"
+      example: "stand-alone"
+
+    # Enum for Wabette States (uses the same states, as indicated in the code)
+    WabetteState:
+      type: string
+      description: Valid states for a Wabette
+      enum:
+        - "NONE"
+        - "INITIALISING"
+        - "INITIALISED"
+        - "CONNECTING"
+        - "CONNECTED"
+        - "PREPARING"
+        - "PREPARED"
+        - "STARTING"
+        - "RUNNING"
+        - "PAUSING"
+        - "PAUSED"
+        - "RESUMING"
+        - "STOPPING"
+        - "STOPPED"
+        - "COMPLETED"
+        - "TERMINATING"
+        - "TERMINATED"
+      example: "RUNNING"
+
+
+    WabetteDetails:
+      type: object
+      description: Details about a Wabette device
+      required:
+        - siteId
+        - currentState
+        - lastStateChangeTime
+      properties:
+        siteId:
+          type: integer
+          format: int16
+          description: The site ID for the Wabette
+          example: 1
+        currentState:
+          type: string
+          oneOf:
+            - $ref: '#/components/schemas/WabetteState'
+          description: The current state of the Wabette
+          example: "active"
+        lastStateChangeTime:
+          type: string
+          format: date-time
+          description: Timestamp of when the Wabette's state last changed
+          example: "2023-09-15T14:30:45Z"
+
+    SSEEvent:
+      type: object
+      description: Base structure for Server-Sent Events
+      required:
+        - eventType
+        - timestamp
+      properties:
+        eventType:
+          type: string
+          description: The type of event
+          example: "stateChange"
+        timestamp:
+          type: string
+          format: date-time
+          description: Time when the event occurred
+          example: "2023-09-15T14:30:45Z"
+
+    WabulatorStateChangeEvent:
+      allOf:
+        - $ref: '#/components/schemas/SSEEvent'
+        - type: object
+          description: Event data for Wabulator state changes
+          required:
+            - id
+            - currentState
+            - previousState
+            - lastChangeTime
+          properties:
+            id:
+              type: string
+              description: Wabulator identifier
+              example: "wab-123"
+            currentState:
+              type: string
+              oneOf:
+                - $ref: '#/components/schemas/WabulatorState'
+              description: The current state of the Wabulator
+              example: "CONNECTED"
+            previousState:
+              type: string
+              description: The previous state of the Wabulator
+              example: "CONNECTING"
+            lastChangeTime:
+              type: string
+              format: date-time
+              description: Time of the last state change
+              example: "2023-09-15T14:30:45Z"
+
+    EventStream:
+      type: array
+      description: Stream of events that can be of different types
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/WabulatorStateChangeEvent"
+          - $ref: "#/components/schemas/WabetteStateChangeEvent"
+        discriminator:
+          propertyName: eventType
+          mapping:
+            wabulatorStateChange: "#/components/schemas/WabulatorStateChangeEvent"
+            wabetteStateChange: "#/components/schemas/WabetteStateChangeEvent"
+
+    WabetteStateChangeEvent:
+      allOf:
+        - $ref: '#/components/schemas/SSEEvent'
+        - type: object
+          description: Event data for Wabette state changes
+          required:
+            - wabulatorId
+            - siteId
+            - currentState
+            - previousState
+            - lastChangeTime
+          properties:
+            wabulatorId:
+              type: string
+              description: ID of the Wabulator associated with this Wabette
+              example: "wab-123"
+            siteId:
+              type: integer
+              format: int16
+              description: Site ID of the Wabette
+              example: 1
+            currentState:
+              type: string
+              oneOf:
+                - $ref: '#/components/schemas/WabetteState'
+              description: The current state of the Wabette
+              example: "PREPARED"
+            previousState:
+              type: string
+              oneOf:
+                - $ref: '#/components/schemas/WabetteState'
+              description: The previous state of the Wabette
+              example: "PREPARING"
+            lastChangeTime:
+              type: string
+              format: date-time
+              description: Time of the last state change
+              example: "2023-09-15T14:30:45Z"
+
+    WabetteStatsUpdateEvent:
+      allOf:
+        - $ref: '#/components/schemas/WabetteStateChangeEvent'
+        - type: object
+          description: Event data for Wabette statistics updates
+          # Note: Properties are the same as WabetteStateChangeEvent in the provided code,
+          # though a real implementation might include additional statistics
+
+    WabulatorStateChangeHistory:
+      type: object
+      description: Record of a historical state change for a Wabulator
+      required:
+        - state
+        - changeTime
+      properties:
+        state:
+          type: string
+          oneOf:
+            - $ref: '#/components/schemas/WabulatorState'
+          description: The state the Wabulator was in
+          example: "CONNECTED"
+        changeTime:
+          type: string
+          format: date-time
+          description: Time when the state change occurred
+          example: "2023-09-15T14:30:45Z"
+
+    WabulatorDetails:
+      type: object
+      description: Detailed information about a Wabulator
+      required:
+        - id
+        - currentState
+        - previousState
+        - lastStateChangeTime
+        - stateHistory
+        - wabettes
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the Wabulator
+          example: "wab-123"
+        currentState:
+          type: string
+          oneOf:
+            - $ref: '#/components/schemas/WabulatorState'
+          description: The current state of the Wabulator
+          example: "CONNECTED"
+        previousState:
+          type: string
+          oneOf:
+            - $ref: '#/components/schemas/WabulatorState'
+          description: The previous state of the Wabulator
+          example: "CONNECTING"
+        lastStateChangeTime:
+          type: string
+          format: date-time
+          description: Time when the Wabulator's state last changed
+          example: "2023-09-15T14:30:45Z"
+        stateHistory:
+          type: array
+          description: History of state changes for this Wabulator
+          items:
+            $ref: '#/components/schemas/WabulatorStateChangeHistory'
+        wabettes:
+          type: array
+          description: List of Wabettes associated with this Wabulator
+          items:
+            $ref: '#/components/schemas/WabetteDetails'
+
+    WabulatorDetailsList:
+      type: object
+      description: List of Wabulator details, usually as a response to a query
+      required:
+        - serverId
+        - timestamp
+        - wabulatorDetails
+      properties:
+        serverId:
+          type: string
+          description: Identifier of the server providing the data
+          example: "server-001"
+        timestamp:
+          type: string
+          format: date-time
+          description: Time when the details were collected
+          example: "2023-09-15T14:30:45Z"
+        wabulatorDetails:
+          type: array
+          description: List of details for each Wabulator
+          items:
+            $ref: '#/components/schemas/WabulatorDetails'
