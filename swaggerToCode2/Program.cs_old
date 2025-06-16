@@ -1,0 +1,93 @@
+﻿using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using OpenApi.Models;
+using SwaggerToCode;
+using SwaggerToCode.Services;
+
+namespace swaggerToCode;
+
+public class Program
+{
+    public static async Task<int> Main(string[] args)
+    {
+        var serviceProvider = ConfigureServices();
+        var configOption = new Option<FileInfo?>(
+            name: "--config",
+            description: "The generate-config.json file to use",
+            getDefaultValue: () => new FileInfo("generate-config.json"));
+
+        var rootCommand = new RootCommand("Swagger/OpenAPI to Code Generator")
+        {
+            configOption
+        };
+
+        rootCommand.SetHandler(async (configFile) =>
+        {
+
+            var services = new ServiceCollection();
+                
+            // Add existing services
+            services.AddLogging(builder => builder.AddConsole());
+                
+            // Add the config reader with the specified file
+            services.AddGenerateConfigReader(configFile.FullName);
+                
+            // Build a new provider
+            var scopedProvider = services.BuildServiceProvider();
+                
+            // Get the config reader
+            var configReader = scopedProvider.GetRequiredService<IConfigurationReader>();
+            var generateConfig = configReader.GetConfiguration();
+                
+            Console.WriteLine($"Loaded configuration from: {config.FullName}");
+            Console.WriteLine($"Configuration contains {generateConfig.Templates.Count} templates");
+                
+            // Process with the configuration
+            await ProcessFile(file, output, generateConfig);
+
+            if (configFile == null)
+            {
+                Console.Error.WriteLine("Input file is required");
+                return;
+            }
+
+            // TODO: Add your processing logic here
+            Console.WriteLine($"Processing file: {file.FullName}");
+            Console.WriteLine($"Output directory: {output}");
+
+            using (TextReader reader = new StreamReader(file.FullName))
+            {
+                Console.WriteLine($"File: {file.FullName} - exists");
+                String strContent = reader.ReadToEnd();
+                Console.WriteLine(strContent);
+                OpenApiDocument docYaml = OpenApiYamlSerializer.DeserializeFromYaml(strContent);
+
+                docYaml.UpdateSchemaReferences();
+                
+                Console.WriteLine($"File: {file.FullName} - contains {docYaml.Paths.Count} paths");
+            }
+
+        }, fileOption, outputOption);
+
+        return await rootCommand.InvokeAsync(args);
+    }
+    
+    private static ServiceProvider ConfigureServices()
+    {
+        var services = new ServiceCollection();
+
+        // Add logging
+        services.AddLogging(builder =>
+        {
+            //builder.A;
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
+
+        // Add services (you can add your service registration here)
+        // Note: We don't register the config reader here because we need the file path from the command line
+
+        return services.BuildServiceProvider();
+    }
+
+}

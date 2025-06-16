@@ -36,6 +36,14 @@ namespace OpenApi.Models
             {
                 return false;
             }
+            
+            foreach(KeyValuePair<string, SchemaObject> schemaEntry in Components.Schemas)
+            {
+                if (!schemaEntry.Value.IsReference)
+                {
+                    schemaEntry.Value.Name = schemaEntry.Key;
+                }
+            }
 
             // Get all schema references from paths using LINQ
             var schemaReferences = Paths.Values
@@ -59,11 +67,11 @@ namespace OpenApi.Models
                             // Response schemas
                             op.Responses?.Values
                                 .SelectMany(r => r.Content?.Values
-                                    .Select(c => c.Schema) ?? Array.Empty<SchemaReference>())
+                                    .Select(c => c.Schema) ?? Array.Empty<SchemaObject>())
                         })
-                        .SelectMany(x => x ?? Array.Empty<SchemaReference>())
+                        .SelectMany(x => x ?? Array.Empty<SchemaObject>())
                 })
-                .SelectMany(x => x ?? Array.Empty<SchemaReference>())
+                .SelectMany(x => x ?? Array.Empty<SchemaObject>())
                 .Where(schema => schema != null && !string.IsNullOrEmpty(schema.Ref));
 
             // Update each schema reference
@@ -74,12 +82,14 @@ namespace OpenApi.Models
                     var schemaName = schemaRef.Ref.Split('/').Last();
                     if (Components.Schemas.TryGetValue(schemaName, out var referencedSchema))
                     {
-                        schemaRef.Schema = referencedSchema;
+                        schemaRef.ReferenceSchemaObject = referencedSchema;
                     }
                 });
             return true;
         }
     }
+    
+    
 
     public class InfoObject
     {
@@ -165,33 +175,12 @@ namespace OpenApi.Models
         public Dictionary<string, SecuritySchemeObject> SecuritySchemes { get; set; }
     }
 
-    public class SchemaReference
-    {
-        [YamlMember(Alias = "$ref")]
-        public string Ref { get; set; }
-        
-        [YamlMember(Alias = "example")]
-        public object Example { get; set; }
-        
-        [YamlMember(Alias = "type")]
-        public string Type { get; set; }
-
-        [YamlMember(Alias = "default")]
-        public object Default { get; set; }
-
-        [YamlMember(Alias = "description")]
-        public string Description { get; set; }
-
-        [YamlMember(Alias = "format")]
-        public string Format { get; set; }
-        
-        [YamlIgnore]
-        public SchemaObject Schema { get; set; }
-    }
-
     public class SchemaObject
     {
         private readonly Dictionary<string, object> _vendorExtensions = new();
+
+        [YamlMember(Alias = "$ref")]
+        public string Ref { get; set; }
 
         [YamlMember(Alias = "type")]
         public string Type { get; set; }
@@ -200,7 +189,7 @@ namespace OpenApi.Models
         public string Format { get; set; }
 
         [YamlMember(Alias = "properties")]
-        public Dictionary<string, SchemaReference> Properties { get; set; }
+        public Dictionary<string, SchemaObject> Properties { get; set; }
 
         [YamlMember(Alias = "items")]
         public SchemaObject Items { get; set; }
@@ -229,9 +218,12 @@ namespace OpenApi.Models
         [YamlMember(Alias = "additionalProperties")]
         public object AdditionalProperties { get; set; }
         
-        public Dictionary<string, object> VendorExtensions => _vendorExtensions;
+        [YamlMember(Alias = "discriminator")]
+        public DiscriminatorObject Discriminator { get; set; }
+        
+        [YamlIgnore] public Dictionary<string, object> VendorExtensions => _vendorExtensions;
 
-        public object this[string key]
+        [YamlIgnore] public object this[string key]
         {
             get => _vendorExtensions.TryGetValue(key, out var value) ? value : null;
             set
@@ -242,8 +234,22 @@ namespace OpenApi.Models
                 }
             }
         }
+
+        [YamlIgnore] public string Name { get; set; }
+        [YamlIgnore] public bool IsReference => ReferenceSchemaObject != null || !string.IsNullOrEmpty(Ref);
+        [YamlIgnore] public bool IsSimpleType => Type == "string" || Type == "number" || Type == "integer" || Type == "boolean";
+        [YamlIgnore] public SchemaObject? ReferenceSchemaObject { get; set; }
     }
 
+    public class DiscriminatorObject
+    {
+        [YamlMember(Alias = "propertyName")]
+        public string PropertyName { get; set; }
+
+        [YamlMember(Alias = "mapping")]
+        public Dictionary<string, string> Mapping { get; set; }
+    }
+    
     public class PathItemObject
     {
         [YamlMember(Alias = "summary")]
@@ -310,7 +316,7 @@ namespace OpenApi.Models
         public bool Required { get; set; }
 
         [YamlMember(Alias = "schema")]
-        public SchemaReference Schema { get; set; }
+        public SchemaObject Schema { get; set; }
     }
 
     public class RequestBodyObject
@@ -340,7 +346,7 @@ namespace OpenApi.Models
     public class MediaTypeObject
     {
         [YamlMember(Alias = "schema")]
-        public SchemaReference Schema { get; set; }
+        public SchemaObject Schema { get; set; }
 
         [YamlMember(Alias = "example")]
         public object Example { get; set; }
@@ -355,7 +361,7 @@ namespace OpenApi.Models
         public string Description { get; set; }
 
         [YamlMember(Alias = "schema")]
-        public SchemaReference Schema { get; set; }
+        public SchemaObject Schema { get; set; }
     }
 
     public class ExampleObject

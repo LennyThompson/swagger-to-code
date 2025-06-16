@@ -1,0 +1,14 @@
+
+fieldAsMember(field)::=
+<%<field.type> _<field.prefix><field.name>;%>
+
+generateCPPFromComponent(component)::=
+<<
+struct <component.name>
+{
+    <component.fields:{field|<fieldAsMember(field)>};seperator="\n">
+    
+    rapidjson::Value bool toJson() const;
+    static <component.name> fromJson(rapidjson::Document& docFrom);
+};
+>>

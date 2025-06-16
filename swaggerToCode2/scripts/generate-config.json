@@ -1,0 +1,32 @@
+{
+  "swagger": [
+    "swagger.yaml"
+  ],
+  "templates": [
+    {
+      "template": "generateCPPHeaderFromComponent",
+      "file-extension": ".h",
+      "path-root": "CppRoot",
+      "path": "comp/include",
+      "target": "Each",
+      "generate-type": "cpp",
+      "generate-params": ["component"],
+      "use": true
+    }
+  ],
+  "root-paths": [
+    {
+      "name": "CppRoot",
+      "path": "cpp/"
+    },
+    {
+      "name": "Template",
+      "path": "template/"
+    },
+    {
+      "name": "Script",
+      "path": "script/"
+    }
+  ],
+  "meta-data":  ""
+}
