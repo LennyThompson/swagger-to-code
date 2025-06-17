@@ -17,6 +17,17 @@ namespace SwaggerToCode.Models // You can change this namespace
 
         [JsonPropertyName("meta-data")]
         public string MetaData { get; set; }
+        
+        [JsonIgnore]
+        public List<string> SwaggerPaths => 
+            Swagger.Select(swagger => Path.Combine(GetSwaggerRootPath(), swagger)).ToList();
+
+        [JsonIgnore]
+        public List<TemplateConfig> TemplateConfigs =>
+             Templates.Where(t => t.Use).ToList();
+
+        [JsonIgnore]
+        public string TemplateRootPath => GetRootPath("Template");
 
         static public GenerateConfig? FromJsonFile(string strJsonFileName)
         {
@@ -60,6 +71,18 @@ namespace SwaggerToCode.Models // You can change this namespace
         public string ToJson()
         {
             return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
+        }
+        
+        private string GetSwaggerRootPath()
+        {
+            return GetRootPath("Swagger");
+        }
+
+        private string GetRootPath(string strPathKey)
+        {
+            return RootPaths
+                .FirstOrDefault(root => root.Name == strPathKey)
+                ?.Path ?? string.Empty;
         }
     }
 

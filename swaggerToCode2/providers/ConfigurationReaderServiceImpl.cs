@@ -25,7 +25,7 @@ namespace SwaggerToCode.Services
             }
         }
 
-        public GenerateConfig GetConfiguration()
+        public GenerateConfig Configuration =>
         {
             if (_cachedConfig != null)
             {

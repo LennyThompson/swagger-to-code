@@ -21,11 +21,15 @@
     },
     {
       "name": "Template",
-      "path": "template/"
+      "path": "templates/"
     },
     {
       "name": "Script",
-      "path": "script/"
+      "path": "scripts/"
+    },
+    {
+      "name": "Swagger",
+      "path": "scripts/"
     }
   ],
   "meta-data":  ""

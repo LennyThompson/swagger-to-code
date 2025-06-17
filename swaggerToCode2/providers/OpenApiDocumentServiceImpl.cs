@@ -31,8 +31,11 @@ namespace SwaggerToCode.Services
         /// </summary>
         /// <param name="configReader">The configuration reader to get swagger file paths</param>
         /// <param name="logger">Logger for diagnostic information</param>
-        public OpenApiDocumentProvider(IConfigurationReader configReader,
-            ILogger<OpenApiDocumentProvider> logger = null)
+        public OpenApiDocumentProvider
+        (
+            IConfigurationReader configReader,
+            ILogger<OpenApiDocumentProvider> logger
+        )
         {
             _configReader = configReader ?? throw new ArgumentNullException(nameof(configReader));
             _logger = logger;
@@ -51,19 +54,20 @@ namespace SwaggerToCode.Services
 
             try
             {
-                var config = _configReader.GetConfiguration();
+                var config = _configReader.Configuration;
 
-                if (config?.Swagger == null || config.Swagger.Count == 0)
+                var listSwaggerPaths = config?.SwaggerPaths ?? [];
+                if (listSwaggerPaths.Count == 0)
                 {
                     _logger?.LogWarning("No swagger files specified in configuration");
                     return;
                 }
 
-                _logger?.LogInformation($"Loading {config.Swagger.Count} OpenAPI documents");
+                _logger?.LogInformation($"Loading {listSwaggerPaths.Count} OpenAPI documents");
 
-                for (int i = 0; i < config.Swagger.Count; i++)
+                for (int i = 0; i < listSwaggerPaths.Count; i++)
                 {
-                    string swaggerFile = config.Swagger[i];
+                    string swaggerFile = listSwaggerPaths[i];
                     await LoadSwaggerFileAsync(swaggerFile, i);
                 }
 

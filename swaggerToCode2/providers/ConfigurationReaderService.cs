@@ -4,7 +4,7 @@ namespace SwaggerToCode.Services
 {
     public interface IConfigurationReader
     {
-        GenerateConfig GetConfiguration();
+        GenerateConfig Configuration { get; }
         string ConfigurationFilePath { get; }
     }
 }
