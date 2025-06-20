@@ -78,7 +78,7 @@ namespace SwaggerToCode.Models // You can change this namespace
             return GetRootPath("Swagger");
         }
 
-        private string GetRootPath(string strPathKey)
+        public string GetRootPath(string strPathKey)
         {
             return RootPaths
                 .FirstOrDefault(root => root.Name == strPathKey)

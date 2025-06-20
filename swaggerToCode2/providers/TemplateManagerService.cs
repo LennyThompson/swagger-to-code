@@ -7,6 +7,6 @@ namespace SwaggerToCode.Services
     {
         TemplateGroup? LoadTemplates();
         Template? GetTemplate(string templateName);
-        string RenderTemplate<T>(string templateName, T model) where T : class;
+        string RenderTemplate(string templateName, Dictionary<string, object> model);
     }
 }

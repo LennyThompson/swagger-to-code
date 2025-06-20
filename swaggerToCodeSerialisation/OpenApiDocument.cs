@@ -4,31 +4,34 @@ using YamlDotNet.Serialization;
 
 namespace OpenApi.Models
 {
-    public class OpenApiDocument
+    public class OpenApiDocument : IOpenApiDocument
     {
         [YamlMember(Alias = "openapi")]
         public string OpenApi { get; set; }
 
         [YamlMember(Alias = "info")]
-        public InfoObject Info { get; set; }
+        public IInfoObject Info { get; set; }
 
         [YamlMember(Alias = "servers")]
-        public List<ServerObject> Servers { get; set; }
+        public List<IServerObject> Servers { get; set; }
 
         [YamlMember(Alias = "paths")]
-        public Dictionary<string, PathItemObject> Paths { get; set; }
+        public Dictionary<string, IPathItemObject> Paths { get; set; }
 
         [YamlMember(Alias = "components")]
-        public ComponentsObject Components { get; set; }
+        public IComponentsObject Components { get; set; }
 
         [YamlMember(Alias = "security")]
         public List<Dictionary<string, List<string>>> Security { get; set; }
 
         [YamlMember(Alias = "tags")]
-        public List<TagObject> Tags { get; set; }
+        public List<ITagObject> Tags { get; set; }
 
         [YamlMember(Alias = "externalDocs")]
-        public ExternalDocumentationObject ExternalDocs { get; set; }
+        public IExternalDocumentationObject ExternalDocs { get; set; }
+
+        [YamlIgnore]
+        public string SwaggerFile { get; set; }
 
         public bool UpdateSchemaReferences()
         {
@@ -91,7 +94,7 @@ namespace OpenApi.Models
     
     
 
-    public class InfoObject
+    public class InfoObject : IInfoObject
     {
         [YamlMember(Alias = "title")]
         public string Title { get; set; }
@@ -112,7 +115,7 @@ namespace OpenApi.Models
         public LicenseObject License { get; set; }
     }
 
-    public class ContactObject
+    public class ContactObject : IContactObject
     {
         [YamlMember(Alias = "name")]
         public string Name { get; set; }
@@ -124,7 +127,7 @@ namespace OpenApi.Models
         public string Email { get; set; }
     }
 
-    public class LicenseObject
+    public class LicenseObject : ILicenseObject
     {
         [YamlMember(Alias = "name")]
         public string Name { get; set; }
@@ -133,7 +136,7 @@ namespace OpenApi.Models
         public string Url { get; set; }
     }
 
-    public class ServerObject
+    public class ServerObject : IServerObject
     {
         [YamlMember(Alias = "url")]
         public string Url { get; set; }
@@ -145,7 +148,7 @@ namespace OpenApi.Models
         public Dictionary<string, ServerVariableObject> Variables { get; set; }
     }
 
-    public class ServerVariableObject
+    public class ServerVariableObject : IServerVariableObject
     {
         [YamlMember(Alias = "enum")]
         public List<string> Enum { get; set; }
@@ -157,7 +160,7 @@ namespace OpenApi.Models
         public string Description { get; set; }
     }
 
-    public class ComponentsObject
+    public class ComponentsObject : IComponentsObject
     {
         [YamlMember(Alias = "schemas")]
         public Dictionary<string, SchemaObject> Schemas { get; set; }
@@ -175,7 +178,7 @@ namespace OpenApi.Models
         public Dictionary<string, SecuritySchemeObject> SecuritySchemes { get; set; }
     }
 
-    public class SchemaObject
+    public class SchemaObject : ISchemaObject
     {
         private readonly Dictionary<string, object> _vendorExtensions = new();
 
@@ -239,9 +242,29 @@ namespace OpenApi.Models
         [YamlIgnore] public bool IsReference => ReferenceSchemaObject != null || !string.IsNullOrEmpty(Ref);
         [YamlIgnore] public bool IsSimpleType => Type == "string" || Type == "number" || Type == "integer" || Type == "boolean";
         [YamlIgnore] public SchemaObject? ReferenceSchemaObject { get; set; }
+        [YamlIgnore] public List<SchemaObjectField> Fields => IsReference ? 
+            ReferenceSchemaObject.Fields : 
+            Properties?.Keys.Select(propName => new SchemaObjectField(this, propName, Properties[propName])).ToList() ?? new List<SchemaObjectField>();
     }
 
-    public class DiscriminatorObject
+    public class SchemaObjectField : ISchemaObjectField
+    {
+        private SchemaObject _parent;
+        private SchemaObject _field;
+        private string _strName;
+        public SchemaObjectField(SchemaObject objParent, string strName, SchemaObject property)
+        {
+            _parent = objParent;
+            _strName = strName;
+            _field = property;
+        }
+
+        public SchemaObject Parent => _parent;
+        public string Name => _strName;
+        public SchemaObject Field => _field;
+    }
+
+    public class DiscriminatorObject : IDiscriminatorObject
     {
         [YamlMember(Alias = "propertyName")]
         public string PropertyName { get; set; }
@@ -250,7 +273,7 @@ namespace OpenApi.Models
         public Dictionary<string, string> Mapping { get; set; }
     }
     
-    public class PathItemObject
+    public class PathItemObject : IPathItemObject
     {
         [YamlMember(Alias = "summary")]
         public string Summary { get; set; }
@@ -274,7 +297,7 @@ namespace OpenApi.Models
         public List<ParameterObject> Parameters { get; set; }
     }
 
-    public class OperationObject
+    public class OperationObject : IOperationObject
     {
         [YamlMember(Alias = "tags")]
         public List<string> Tags { get; set; }
@@ -301,7 +324,7 @@ namespace OpenApi.Models
         public List<Dictionary<string, List<string>>> Security { get; set; }
     }
 
-    public class ParameterObject
+    public class ParameterObject : IParameterObject
     {
         [YamlMember(Alias = "name")]
         public string Name { get; set; }
@@ -319,7 +342,7 @@ namespace OpenApi.Models
         public SchemaObject Schema { get; set; }
     }
 
-    public class RequestBodyObject
+    public class RequestBodyObject : IRequestBodyObject
     {
         [YamlMember(Alias = "description")]
         public string Description { get; set; }
@@ -331,7 +354,7 @@ namespace OpenApi.Models
         public Dictionary<string, MediaTypeObject> Content { get; set; }
     }
 
-    public class ResponseObject
+    public class ResponseObject : IResponseObject
     {
         [YamlMember(Alias = "description")]
         public string Description { get; set; }
@@ -343,7 +366,7 @@ namespace OpenApi.Models
         public Dictionary<string, HeaderObject> Headers { get; set; }
     }
 
-    public class MediaTypeObject
+    public class MediaTypeObject : IMediaTypeObject
     {
         [YamlMember(Alias = "schema")]
         public SchemaObject Schema { get; set; }
@@ -355,7 +378,7 @@ namespace OpenApi.Models
         public Dictionary<string, ExampleObject> Examples { get; set; }
     }
 
-    public class HeaderObject
+    public class HeaderObject : IHeaderObject
     {
         [YamlMember(Alias = "description")]
         public string Description { get; set; }
@@ -364,7 +387,7 @@ namespace OpenApi.Models
         public SchemaObject Schema { get; set; }
     }
 
-    public class ExampleObject
+    public class ExampleObject : IExampleObject
     {
         [YamlMember(Alias = "summary")]
         public string Summary { get; set; }
@@ -379,7 +402,7 @@ namespace OpenApi.Models
         public string ExternalValue { get; set; }
     }
 
-    public class SecuritySchemeObject
+    public class SecuritySchemeObject : ISecuritySchemeObject
     {
         [YamlMember(Alias = "type")]
         public string Type { get; set; }
@@ -403,7 +426,7 @@ namespace OpenApi.Models
         public OAuthFlowsObject Flows { get; set; }
     }
 
-    public class OAuthFlowsObject
+    public class OAuthFlowsObject : IOAuthFlowsObject
     {
         [YamlMember(Alias = "implicit")]
         public OAuthFlowObject Implicit { get; set; }
@@ -418,7 +441,7 @@ namespace OpenApi.Models
         public OAuthFlowObject AuthorizationCode { get; set; }
     }
 
-    public class OAuthFlowObject
+    public class OAuthFlowObject : IOAuthFlowObject
     {
         [YamlMember(Alias = "authorizationUrl")]
         public string AuthorizationUrl { get; set; }
@@ -433,7 +456,7 @@ namespace OpenApi.Models
         public Dictionary<string, string> Scopes { get; set; }
     }
 
-    public class TagObject
+    public class TagObject : ITagObject
     {
         [YamlMember(Alias = "name")]
         public string Name { get; set; }
@@ -445,7 +468,7 @@ namespace OpenApi.Models
         public ExternalDocumentationObject ExternalDocs { get; set; }
     }
 
-    public class ExternalDocumentationObject
+    public class ExternalDocumentationObject : IExternalDocumentationObject
     {
         [YamlMember(Alias = "description")]
         public string Description { get; set; }

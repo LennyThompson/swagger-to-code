@@ -41,7 +41,7 @@ namespace SwaggerToCode.Services
             }
 
             // We'll try to load template files from the template directory
-            string[] templateFiles = Directory.GetFiles(templateRootPath, "*.stg", SearchOption.AllDirectories);
+            var templateFiles = Directory.GetFiles(templateRootPath, "*.stg", SearchOption.AllDirectories).Select(path => Path.GetFullPath(path)).ToList();
 
             foreach (var templateFile in templateFiles)
             {
@@ -72,7 +72,7 @@ namespace SwaggerToCode.Services
             return _templateGroup.GetInstanceOf(templateName);
         }
 
-        public string RenderTemplate<T>(string templateName, T model) where T : class
+        public string RenderTemplate(string templateName, Dictionary<string, object> model)
         {
             Template? template = GetTemplate(templateName);
 
@@ -81,14 +81,9 @@ namespace SwaggerToCode.Services
                 // Add the model to the template
                 if (model != null)
                 {
-                    var properties = model.GetType().GetProperties();
-                    foreach (var property in properties)
+                    foreach (var key in model.Keys)
                     {
-                        var value = property.GetValue(model);
-                        if (value != null)
-                        {
-                            template.Add(property.Name, value);
-                        }
+                        template.Add(key, model[key]);
                     }
                 }
 

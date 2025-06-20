@@ -2,13 +2,13 @@
 fieldAsMember(field)::=
 <%<field.type> _<field.prefix><field.name>;%>
 
-generateCPPFromComponent(component)::=
+generateCPPHeaderFromComponent(schema, model)::=
 <<
-struct <component.name>
+struct <model.name>
 {
-    <component.fields:{field|<fieldAsMember(field)>};seperator="\n">
+    <model.fields:{field|<fieldAsMember(field)>};seperator="\n">
     
     rapidjson::Value bool toJson() const;
-    static <component.name> fromJson(rapidjson::Document& docFrom);
+    static <model.name> fromJson(rapidjson::Document& docFrom);
 };
 >>

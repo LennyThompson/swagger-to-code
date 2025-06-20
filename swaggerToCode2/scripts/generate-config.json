@@ -8,9 +8,9 @@
       "file-extension": ".h",
       "path-root": "CppRoot",
       "path": "comp/include",
-      "target": "Each",
+      "target": "each-model",
       "generate-type": "cpp",
-      "generate-params": ["component"],
+      "generate-params": ["model"],
       "use": true
     }
   ],
@@ -21,7 +21,7 @@
     },
     {
       "name": "Template",
-      "path": "templates/"
+      "path": "./templates/"
     },
     {
       "name": "Script",

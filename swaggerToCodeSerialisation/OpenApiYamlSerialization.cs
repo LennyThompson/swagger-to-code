@@ -13,6 +13,7 @@ public class OpenApiYamlSerializer
         var namingConvention = CamelCaseNamingConvention.Instance; // Or your desired convention
         var deserializer = new DeserializerBuilder()
             .WithNamingConvention(namingConvention)
+            .WithObjectFactory(new OpenApiObjectFactory())
             .WithNodeDeserializer(inner => 
                     new VendorExtensionNodeDeserializer(inner, namingConvention), // Pass the convention
                 selector => 

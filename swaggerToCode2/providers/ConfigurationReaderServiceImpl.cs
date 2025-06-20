@@ -9,7 +9,7 @@ namespace SwaggerToCode.Services
     {
         private readonly ILogger<GenerateConfigReader> _logger;
         private GenerateConfig _cachedConfig;
-        
+
         public string ConfigurationFilePath { get; }
 
         public GenerateConfigReader(string configFilePath, ILogger<GenerateConfigReader> logger = null)
@@ -25,28 +25,31 @@ namespace SwaggerToCode.Services
             }
         }
 
-        public GenerateConfig Configuration =>
+        public GenerateConfig Configuration  
         {
-            if (_cachedConfig != null)
+            get 
             {
-                return _cachedConfig;
-            }
-
-            try
-            {
-                _cachedConfig = GenerateConfig.FromJsonFile(ConfigurationFilePath);
-                
-                if (_cachedConfig == null)
+                if (_cachedConfig != null)
                 {
-                    throw new InvalidOperationException("Failed to load configuration file.");
+                    return _cachedConfig;
                 }
 
-                return _cachedConfig;
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, $"Error loading configuration from {ConfigurationFilePath}");
-                throw;
+                try
+                {
+                    _cachedConfig = GenerateConfig.FromJsonFile(ConfigurationFilePath);
+
+                    if (_cachedConfig == null)
+                    {
+                        throw new InvalidOperationException("Failed to load configuration file.");
+                    }
+
+                    return _cachedConfig;
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, $"Error loading configuration from {ConfigurationFilePath}");
+                    throw;
+                }
             }
         }
     }

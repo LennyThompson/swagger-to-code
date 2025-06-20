@@ -22,6 +22,9 @@
       <None Update="scripts\generate-config.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="templates\swagger_to_cpp.stg">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>

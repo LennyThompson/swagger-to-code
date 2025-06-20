@@ -35,7 +35,7 @@ public class Program
 
         rootCommand.Add(outputDirOption);
 
-        rootCommand.SetHandler(async (configFile, outputDir) =>
+        rootCommand.SetHandler(async (FileInfo configFile, string outputDir) =>
         {
             if (configFile == null || !configFile.Exists)
             {
@@ -64,8 +64,12 @@ public class Program
             // der service
             services.AddGenerateConfigReader(configFile.FullName);
 
-            // Add the OpenAPI document provider service
-            services.AddOpenApiDocumentProvider();
+            // Add the OpenAPI conde generation provider services
+            services.AddOpenApiDocumentProvider()
+                .AddTemplateManagerService()
+                .AddCodeGeneratorService()
+                .AddAdapterProvider()
+                .AddTypeAdapterProvider();
 
             // Build the service provider
             var scopedProvider = services.BuildServiceProvider();
@@ -74,11 +78,12 @@ public class Program
             var logger = scopedProvider.GetRequiredService<ILogger<Program>>();
             var configReader = scopedProvider.GetRequiredService<IConfigurationReader>();
             var openApiProvider = scopedProvider.GetRequiredService<IOpenApiDocumentProvider>();
-
+            CodeGeneratorService generatorService = scopedProvider.GetRequiredService<CodeGeneratorService>();
+            
             try
             {
                 // Get the configuration
-                var generateConfig = configReader.GetConfiguration();
+                var generateConfig = configReader.Configuration;
                 logger.LogInformation($"Loaded configuration from: {configFile.FullName}");
                 logger.LogInformation($"Configuration contains {generateConfig.Templates.Count} templates");
 
@@ -94,7 +99,7 @@ public class Program
                 logger.LogInformation($"Loaded {openApiProvider.Documents.Count} OpenAPI documents");
 
                 // Process the documents with the templates
-                await ProcessOpenApiDocuments(openApiProvider, generateConfig, outputDir, logger);
+                await ProcessOpenApiDocuments(openApiProvider, generateConfig, generatorService, outputDir, logger);
             }
             catch (Exception ex)
             {
@@ -109,6 +114,7 @@ public class Program
     private static async Task ProcessOpenApiDocuments(
         IOpenApiDocumentProvider openApiProvider, 
         GenerateConfig config, 
+        CodeGeneratorService generatorService,
         string outputDirectory,
         ILogger logger)
     {
@@ -118,72 +124,25 @@ public class Program
             Directory.CreateDirectory(outputDirectory);
             logger.LogInformation($"Created output directory: {outputDirectory}");
         }
-
+        
+        
         // Process each OpenAPI document
-        for (int i = 0; i < openApiProvider.Documents.Count; i++)
+        foreach (var document in openApiProvider.Documents)
         {
-            var document = openApiProvider.Documents[i];
-            var swaggerFileName = config.Swagger[i];
-            
-            logger.LogInformation($"Processing document {i+1}/{openApiProvider.Documents.Count}: {swaggerFileName}");
+            logger.LogInformation($"Processing document {document.SwaggerFile}");
             logger.LogInformation($"Document contains {document.Paths.Count} paths and {document.Components.Schemas.Count} schemas");
-            
-            // Process each template for this document
-            foreach (var template in config.Templates)
-            {
-                if (!template.Use)
-                {
-                    logger.LogInformation($"Skipping disabled template: {template.Template}");
-                    continue;
-                }
-                
-                logger.LogInformation($"Applying template: {template.Template}");
-                
-                // Get the root path for this template
-                string rootPath = GetRootPathForTemplate(template, config);
-                string templateOutputPath = Path.Combine(outputDirectory, rootPath, template.Path);
-                
-                // Create the output directory for this template if it doesn't exist
-                if (!Directory.Exists(templateOutputPath))
-                {
-                    Directory.CreateDirectory(templateOutputPath);
-                    logger.LogInformation($"Created template output directory: {templateOutputPath}");
-                }
 
-                // TODO: Apply the template to the document
-                // This is where you would implement your template processing logic
-                // For now, we'll just log that we would process it
-                logger.LogInformation($"Would generate {template.GenerateType} code using template {template.Template} in {templateOutputPath}");
-                
-                // Example of how you might handle different template targets
-                switch (template.Target.ToLowerInvariant())
-                {
-                    case "each":
-                        // Process each schema in the document
-                        foreach (var schema in document.Components.Schemas)
-                        {
-                            logger.LogInformation($"Would process schema: {schema.Key}");
-                            
-                            // Example file naming
-                            string outputFileName1 = $"{schema.Key}{template.FileExtension}";
-                            string outputFilePath1 = Path.Combine(templateOutputPath, outputFileName1);
-                            
-                            logger.LogInformation($"Would write to: {outputFilePath1}");
-                        }
-                        break;
-                        
-                    case "all":
-                        // Process all schemas in one go
-                        string outputFileName = $"AllSchemas{template.FileExtension}";
-                        string outputFilePath = Path.Combine(templateOutputPath, outputFileName);
-                        
-                        logger.LogInformation($"Would write all schemas to: {outputFilePath}");
-                        break;
-                        
-                    default:
-                        logger.LogWarning($"Unknown template target: {template.Target}");
-                        break;
-                }
+            GenerateTarget targetOverall = new OpenApiGenerateTarget("test", document);
+            
+            generatorService.GenerateCode(targetOverall);
+            
+            foreach (var openApiGenerateTarget in document.Paths.Select(path => new OpenApiGenerateTarget(path.Key, document, path.Value)))
+            {
+                generatorService.GenerateCode(openApiGenerateTarget);
+            }
+            foreach (var openApiGenerateTarget in document.Components.Schemas.Select(model => new OpenApiGenerateTarget(model.Key, document, model.Value)))
+            {
+                generatorService.GenerateCode(openApiGenerateTarget);
             }
         }
     }

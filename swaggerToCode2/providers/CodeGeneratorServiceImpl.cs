@@ -1,5 +1,6 @@
 
 using Microsoft.Extensions.Logging;
+using SwaggerToCode.Models;
 using SwaggerToCode.Services;
 
 namespace SwaggerToCode
@@ -23,12 +24,12 @@ namespace SwaggerToCode
             _logger = logger;
         }
 
-        public void GenerateCode<T>(T model) where T : class
+        public void GenerateCode<T>(T model) where T : GenerateTarget
         {
             // Get active templates from configuration
             var templateConfigs = _configService.Configuration.TemplateConfigs;
             
-            foreach (var templateConfig in templateConfigs)
+            foreach (var templateConfig in templateConfigs.Where(templateConfig => templateConfig.Target == model.TargetType))
             {
                 // Check if the template is meant to be used
                 if (!templateConfig.Use)
@@ -47,10 +48,10 @@ namespace SwaggerToCode
                     {
                         try
                         {
-                            var value = ((IDictionary<string, object>)model)[param];
+                            var value = model.Parameters[param];
                             if (value != null)
                             {
-                                modelParams[param] = value;
+                                modelParams[param] = value.Model;
                             }
                             else
                             {
@@ -72,7 +73,7 @@ namespace SwaggerToCode
                     string templateName = templateConfig.Template;
                     
                     // Render the template with the model
-                    string generatedCode = _templateManager.RenderTemplate(templateName, model);
+                    string generatedCode = _templateManager.RenderTemplate(templateName, modelParams);
                     
                     // Determine output path
                     string outputRootPath = _configService.Configuration.GetRootPath(templateConfig.PathRoot);
@@ -82,7 +83,7 @@ namespace SwaggerToCode
                     Directory.CreateDirectory(outputPath);
                     
                     // Create file name
-                    string fileName = $"{model.name}{templateConfig.FileExtension}";
+                    string fileName = $"{model.TargetName}{templateConfig.FileExtension}";
                     string filePath = Path.Combine(outputPath, fileName);
                     
                     // Write to file
