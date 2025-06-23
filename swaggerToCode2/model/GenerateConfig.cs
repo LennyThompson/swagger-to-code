@@ -100,14 +100,17 @@ namespace SwaggerToCode.Models // You can change this namespace
         [JsonPropertyName("path")]
         public string Path { get; set; }
 
+        [JsonPropertyName("generators")]
+        public List<string> Generators { get; set; } = new List<string>();
+
         [JsonPropertyName("target")]
-        public string Target { get; set; }
+        public List<string> Target { get; set; } = new List<string>();
 
         [JsonPropertyName("generate-type")]
         public string GenerateType { get; set; }
 
-        [JsonPropertyName("generate-params")]
-        public List<string> GenerateParams { get; set; }
+        [JsonPropertyName("generate-params")] 
+        public List<string> GenerateParams { get; set; } = new List<string>();
 
         [JsonPropertyName("use")]
         public bool Use { get; set; }

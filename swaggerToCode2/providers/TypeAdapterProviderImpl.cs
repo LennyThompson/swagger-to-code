@@ -21,9 +21,9 @@ public class TypeAdapterProviderImpl : TypeAdapterProvider
         _logger = logger;
     }
 
-    public TypeAdapter GetTypeAdapter(TemplateConfig templateConfigFor, string strName, SchemaObject schemaObj)
+    public TypeAdapter GetTypeAdapter(TemplateConfig templateConfigFor, string strName, ISchemaObject schemaObj)
     {
-        switch (templateConfigFor.Target.ToLower())
+        switch (templateConfigFor.GenerateType.ToLower())
         {
             case "cpp":
             case "c++":

@@ -2,16 +2,20 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using YamlDotNet.Serialization;
 using OpenApi.Models;
+using swaggerToCode2.providers;
+using System.Linq;
 
 namespace SwaggerToCode.Adapters
 {
     public class OpenApiDocumentAdapter : IOpenApiDocument
     {
-        private readonly OpenApiDocument _document;
+        private readonly IOpenApiDocument _document;
+        private readonly AdapterProvider _adapterProvider;
 
-        public OpenApiDocumentAdapter(OpenApiDocument document)
+        public OpenApiDocumentAdapter(IOpenApiDocument document, AdapterProvider adapterProvider)
         {
             _document = document;
+            _adapterProvider = adapterProvider;
         }
 
         public string OpenApi 
@@ -22,25 +26,28 @@ namespace SwaggerToCode.Adapters
 
         public IInfoObject Info 
         { 
-            get => _document.Info; 
+            get => _document.Info is InfoObject info ? _adapterProvider.CreateInfoObjectAdapter(info) : null; 
             set => _document.Info = value; 
         }
 
         public List<IServerObject> Servers 
         { 
-            get => _document.Servers; 
+            get => _document.Servers.Select(server => _adapterProvider.CreateServerObjectAdapter(server as ServerObject)).ToList(); 
             set => _document.Servers = value; 
         }
 
         public Dictionary<string, IPathItemObject> Paths 
         { 
-            get => _document.Paths; 
+            get => _document.Paths.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreatePathItemObjectAdapter(kvp.Value as PathItemObject) as IPathItemObject); 
             set => _document.Paths = value; 
         }
 
         public IComponentsObject Components 
         { 
-            get => _document.Components; 
+            get => _document.Components is ComponentsObject components ? 
+                  _adapterProvider.CreateComponentsObjectAdapter(components) : null; 
             set => _document.Components = value; 
         }
 
@@ -52,13 +59,15 @@ namespace SwaggerToCode.Adapters
 
         public List<ITagObject> Tags 
         { 
-            get => _document.Tags; 
+            get => _document.Tags.Select(tag => 
+                  _adapterProvider.CreateTagObjectAdapter(tag as TagObject) as ITagObject).ToList(); 
             set => _document.Tags = value; 
         }
 
         public IExternalDocumentationObject ExternalDocs 
         { 
-            get => _document.ExternalDocs; 
+            get => _document.ExternalDocs is ExternalDocumentationObject externalDocs ? 
+                  _adapterProvider.CreateExternalDocumentationObjectAdapter(externalDocs) : null; 
             set => _document.ExternalDocs = value; 
         }
 
@@ -76,11 +85,13 @@ namespace SwaggerToCode.Adapters
 
     public class InfoObjectAdapter : IInfoObject
     {
-        private readonly InfoObject _info;
+        private readonly IInfoObject _info;
+        private readonly AdapterProvider _adapterProvider;
 
-        public InfoObjectAdapter(InfoObject info)
+        public InfoObjectAdapter(IInfoObject info, AdapterProvider adapterProvider)
         {
             _info = info;
+            _adapterProvider = adapterProvider;
         }
 
         public string Title 
@@ -122,11 +133,13 @@ namespace SwaggerToCode.Adapters
 
     public class ContactObjectAdapter : IContactObject
     {
-        private readonly ContactObject _contact;
+        private readonly IContactObject _contact;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ContactObjectAdapter(ContactObject contact)
+        public ContactObjectAdapter(IContactObject contact, AdapterProvider adapterProvider)
         {
             _contact = contact;
+            _adapterProvider = adapterProvider;
         }
 
         public string Name 
@@ -150,11 +163,13 @@ namespace SwaggerToCode.Adapters
 
     public class LicenseObjectAdapter : ILicenseObject
     {
-        private readonly LicenseObject _license;
+        private readonly ILicenseObject _license;
+        private readonly AdapterProvider _adapterProvider;
 
-        public LicenseObjectAdapter(LicenseObject license)
+        public LicenseObjectAdapter(ILicenseObject license, AdapterProvider adapterProvider)
         {
             _license = license;
+            _adapterProvider = adapterProvider;
         }
 
         public string Name 
@@ -172,11 +187,13 @@ namespace SwaggerToCode.Adapters
 
     public class ServerObjectAdapter : IServerObject
     {
-        private readonly ServerObject _server;
+        private readonly IServerObject _server;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ServerObjectAdapter(ServerObject server)
+        public ServerObjectAdapter(IServerObject server, AdapterProvider adapterProvider)
         {
             _server = server;
+            _adapterProvider = adapterProvider;
         }
 
         public string Url 
@@ -193,18 +210,22 @@ namespace SwaggerToCode.Adapters
 
         public Dictionary<string, ServerVariableObject> Variables 
         { 
-            get => _server.Variables; 
+            get => _server.Variables.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateServerVariableObjectAdapter(kvp.Value) as ServerVariableObject); 
             set => _server.Variables = value; 
         }
     }
 
     public class ServerVariableObjectAdapter : IServerVariableObject
     {
-        private readonly ServerVariableObject _serverVariable;
+        private readonly IServerVariableObject _serverVariable;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ServerVariableObjectAdapter(ServerVariableObject serverVariable)
+        public ServerVariableObjectAdapter(IServerVariableObject serverVariable, AdapterProvider adapterProvider)
         {
             _serverVariable = serverVariable;
+            _adapterProvider = adapterProvider;
         }
 
         public List<string> Enum 
@@ -228,51 +249,65 @@ namespace SwaggerToCode.Adapters
 
     public class ComponentsObjectAdapter : IComponentsObject
     {
-        private readonly ComponentsObject _components;
+        private readonly IComponentsObject _components;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ComponentsObjectAdapter(ComponentsObject components)
+        public ComponentsObjectAdapter(IComponentsObject components, AdapterProvider adapterProvider)
         {
             _components = components;
+            _adapterProvider = adapterProvider;
         }
 
         public Dictionary<string, SchemaObject> Schemas 
         { 
-            get => _components.Schemas; 
+            get => _components.Schemas.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Value) as SchemaObject); 
             set => _components.Schemas = value; 
         }
 
         public Dictionary<string, ResponseObject> Responses 
         { 
-            get => _components.Responses; 
+            get => _components.Responses.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateResponseObjectAdapter(kvp.Value) as ResponseObject); 
             set => _components.Responses = value; 
         }
 
         public Dictionary<string, ParameterObject> Parameters 
         { 
-            get => _components.Parameters; 
+            get => _components.Parameters.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateParameterObjectAdapter(kvp.Value) as ParameterObject); 
             set => _components.Parameters = value; 
         }
 
         public Dictionary<string, RequestBodyObject> RequestBodies 
         { 
-            get => _components.RequestBodies; 
+            get => _components.RequestBodies.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateRequestBodyObjectAdapter(kvp.Value) as RequestBodyObject); 
             set => _components.RequestBodies = value; 
         }
 
         public Dictionary<string, SecuritySchemeObject> SecuritySchemes 
         { 
-            get => _components.SecuritySchemes; 
+            get => _components.SecuritySchemes.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateSecuritySchemeObjectAdapter(kvp.Value) as SecuritySchemeObject); 
             set => _components.SecuritySchemes = value; 
         }
     }
 
     public class SchemaObjectAdapter : ISchemaObject
     {
-        private readonly SchemaObject _schema;
+        private readonly ISchemaObject _schema;
+        private readonly AdapterProvider _adapterProvider;
 
-        public SchemaObjectAdapter(SchemaObject schema)
+        public SchemaObjectAdapter(ISchemaObject schema, AdapterProvider adapterProvider)
         {
             _schema = schema;
+            _adapterProvider = adapterProvider;
         }
 
         public string Ref 
@@ -295,13 +330,16 @@ namespace SwaggerToCode.Adapters
 
         public Dictionary<string, SchemaObject> Properties 
         { 
-            get => _schema.Properties; 
+            get => _schema.Properties.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Value) as SchemaObject); 
             set => _schema.Properties = value; 
         }
 
         public SchemaObject Items 
         { 
-            get => _schema.Items; 
+            get => _schema.Items != null ? 
+                  _adapterProvider.CreateSchemaObjectAdapter(_schema.Items) as SchemaObject : null; 
             set => _schema.Items = value; 
         }
 
@@ -319,19 +357,22 @@ namespace SwaggerToCode.Adapters
 
         public List<SchemaObject> AllOf 
         { 
-            get => _schema.AllOf; 
+            get => _schema.AllOf?.Select(schema => 
+                  _adapterProvider.CreateSchemaObjectAdapter(schema) as SchemaObject).ToList(); 
             set => _schema.AllOf = value; 
         }
 
         public List<SchemaObject> OneOf 
         { 
-            get => _schema.OneOf; 
+            get => _schema.OneOf?.Select(schema => 
+                  _adapterProvider.CreateSchemaObjectAdapter(schema) as SchemaObject).ToList(); 
             set => _schema.OneOf = value; 
         }
 
         public List<SchemaObject> AnyOf 
         { 
-            get => _schema.AnyOf; 
+            get => _schema.AnyOf?.Select(schema => 
+                  _adapterProvider.CreateSchemaObjectAdapter(schema) as SchemaObject).ToList(); 
             set => _schema.AnyOf = value; 
         }
 
@@ -355,7 +396,8 @@ namespace SwaggerToCode.Adapters
 
         public DiscriminatorObject Discriminator 
         { 
-            get => _schema.Discriminator; 
+            get => _schema.Discriminator != null ? 
+                  _adapterProvider.CreateDiscriminatorObjectAdapter(_schema.Discriminator) as DiscriminatorObject : null; 
             set => _schema.Discriminator = value; 
         }
 
@@ -379,36 +421,44 @@ namespace SwaggerToCode.Adapters
 
         public SchemaObject? ReferenceSchemaObject 
         { 
-            get => _schema.ReferenceSchemaObject; 
+            get => _schema.ReferenceSchemaObject != null ? 
+                  _adapterProvider.CreateSchemaObjectAdapter(_schema.ReferenceSchemaObject) as SchemaObject : null; 
             set => _schema.ReferenceSchemaObject = value; 
         }
 
-        public List<SchemaObjectField> Fields => _schema.Fields;
+        public List<SchemaObjectField> Fields => _schema.Fields.Select(field => 
+                                                _adapterProvider.CreateSchemaObjectFieldAdapter(field) as SchemaObjectField).ToList();
     }
 
     public class SchemaObjectFieldAdapter : ISchemaObjectField
     {
-        private readonly SchemaObjectField _field;
+        private readonly ISchemaObjectField _field;
+        private readonly AdapterProvider _adapterProvider;
 
-        public SchemaObjectFieldAdapter(SchemaObjectField field)
+        public SchemaObjectFieldAdapter(ISchemaObjectField field, AdapterProvider adapterProvider)
         {
             _field = field;
+            _adapterProvider = adapterProvider;
         }
 
-        public SchemaObject Parent => _field.Parent;
+        public SchemaObject Parent => _field.Parent != null ? 
+                                     _adapterProvider.CreateSchemaObjectAdapter(_field.Parent) as SchemaObject : null;
 
         public string Name => _field.Name;
 
-        public SchemaObject Field => _field.Field;
+        public SchemaObject Field => _field.Field != null ? 
+                                    _adapterProvider.CreateSchemaObjectAdapter(_field.Field) as SchemaObject : null;
     }
 
     public class DiscriminatorObjectAdapter : IDiscriminatorObject
     {
-        private readonly DiscriminatorObject _discriminator;
+        private readonly IDiscriminatorObject _discriminator;
+        private readonly AdapterProvider _adapterProvider;
 
-        public DiscriminatorObjectAdapter(DiscriminatorObject discriminator)
+        public DiscriminatorObjectAdapter(IDiscriminatorObject discriminator, AdapterProvider adapterProvider)
         {
             _discriminator = discriminator;
+            _adapterProvider = adapterProvider;
         }
 
         public string PropertyName 
@@ -426,11 +476,13 @@ namespace SwaggerToCode.Adapters
 
     public class PathItemObjectAdapter : IPathItemObject
     {
-        private readonly PathItemObject _pathItem;
+        private readonly IPathItemObject _pathItem;
+        private readonly AdapterProvider _adapterProvider;
 
-        public PathItemObjectAdapter(PathItemObject pathItem)
+        public PathItemObjectAdapter(IPathItemObject pathItem, AdapterProvider adapterProvider)
         {
             _pathItem = pathItem;
+            _adapterProvider = adapterProvider;
         }
 
         public string Summary 
@@ -447,42 +499,49 @@ namespace SwaggerToCode.Adapters
 
         public OperationObject Get 
         { 
-            get => _pathItem.Get; 
+            get => _pathItem.Get != null ? 
+                  _adapterProvider.CreateOperationObjectAdapter(_pathItem.Get) as OperationObject : null; 
             set => _pathItem.Get = value; 
         }
 
         public OperationObject Put 
         { 
-            get => _pathItem.Put; 
+            get => _pathItem.Put != null ? 
+                  _adapterProvider.CreateOperationObjectAdapter(_pathItem.Put) as OperationObject : null; 
             set => _pathItem.Put = value; 
         }
 
         public OperationObject Post 
         { 
-            get => _pathItem.Post; 
+            get => _pathItem.Post != null ? 
+                  _adapterProvider.CreateOperationObjectAdapter(_pathItem.Post) as OperationObject : null; 
             set => _pathItem.Post = value; 
         }
 
         public OperationObject Delete 
         { 
-            get => _pathItem.Delete; 
+            get => _pathItem.Delete != null ? 
+                  _adapterProvider.CreateOperationObjectAdapter(_pathItem.Delete) as OperationObject : null; 
             set => _pathItem.Delete = value; 
         }
 
         public List<ParameterObject> Parameters 
         { 
-            get => _pathItem.Parameters; 
+            get => _pathItem.Parameters?.Select(param => 
+                  _adapterProvider.CreateParameterObjectAdapter(param) as ParameterObject).ToList(); 
             set => _pathItem.Parameters = value; 
         }
     }
 
     public class OperationObjectAdapter : IOperationObject
     {
-        private readonly OperationObject _operation;
+        private readonly IOperationObject _operation;
+        private readonly AdapterProvider _adapterProvider;
 
-        public OperationObjectAdapter(OperationObject operation)
+        public OperationObjectAdapter(IOperationObject operation, AdapterProvider adapterProvider)
         {
             _operation = operation;
+            _adapterProvider = adapterProvider;
         }
 
         public List<string> Tags 
@@ -511,19 +570,23 @@ namespace SwaggerToCode.Adapters
 
         public List<ParameterObject> Parameters 
         { 
-            get => _operation.Parameters; 
+            get => _operation.Parameters?.Select(param => 
+                  _adapterProvider.CreateParameterObjectAdapter(param) as ParameterObject).ToList(); 
             set => _operation.Parameters = value; 
         }
 
         public RequestBodyObject RequestBody 
         { 
-            get => _operation.RequestBody; 
+            get => _operation.RequestBody != null ? 
+                  _adapterProvider.CreateRequestBodyObjectAdapter(_operation.RequestBody) as RequestBodyObject : null; 
             set => _operation.RequestBody = value; 
         }
 
         public Dictionary<string, ResponseObject> Responses 
         { 
-            get => _operation.Responses; 
+            get => _operation.Responses.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateResponseObjectAdapter(kvp.Value) as ResponseObject); 
             set => _operation.Responses = value; 
         }
 
@@ -536,11 +599,13 @@ namespace SwaggerToCode.Adapters
 
     public class ParameterObjectAdapter : IParameterObject
     {
-        private readonly ParameterObject _parameter;
+        private readonly IParameterObject _parameter;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ParameterObjectAdapter(ParameterObject parameter)
+        public ParameterObjectAdapter(IParameterObject parameter, AdapterProvider adapterProvider)
         {
             _parameter = parameter;
+            _adapterProvider = adapterProvider;
         }
 
         public string Name 
@@ -569,18 +634,21 @@ namespace SwaggerToCode.Adapters
 
         public SchemaObject Schema 
         { 
-            get => _parameter.Schema; 
+            get => _parameter.Schema != null ? 
+                  _adapterProvider.CreateSchemaObjectAdapter(_parameter.Schema) as SchemaObject : null; 
             set => _parameter.Schema = value; 
         }
     }
 
     public class RequestBodyObjectAdapter : IRequestBodyObject
     {
-        private readonly RequestBodyObject _requestBody;
+        private readonly IRequestBodyObject _requestBody;
+        private readonly AdapterProvider _adapterProvider;
 
-        public RequestBodyObjectAdapter(RequestBodyObject requestBody)
+        public RequestBodyObjectAdapter(IRequestBodyObject requestBody, AdapterProvider adapterProvider)
         {
             _requestBody = requestBody;
+            _adapterProvider = adapterProvider;
         }
 
         public string Description 
@@ -597,18 +665,22 @@ namespace SwaggerToCode.Adapters
 
         public Dictionary<string, MediaTypeObject> Content 
         { 
-            get => _requestBody.Content; 
+            get => _requestBody.Content.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateMediaTypeObjectAdapter(kvp.Value) as MediaTypeObject); 
             set => _requestBody.Content = value; 
         }
     }
 
     public class ResponseObjectAdapter : IResponseObject
     {
-        private readonly ResponseObject _response;
+        private readonly IResponseObject _response;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ResponseObjectAdapter(ResponseObject response)
+        public ResponseObjectAdapter(IResponseObject response, AdapterProvider adapterProvider)
         {
             _response = response;
+            _adapterProvider = adapterProvider;
         }
 
         public string Description 
@@ -619,29 +691,36 @@ namespace SwaggerToCode.Adapters
 
         public Dictionary<string, MediaTypeObject> Content 
         { 
-            get => _response.Content; 
+            get => _response.Content?.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateMediaTypeObjectAdapter(kvp.Value) as MediaTypeObject); 
             set => _response.Content = value; 
         }
 
         public Dictionary<string, HeaderObject> Headers 
         { 
-            get => _response.Headers; 
+            get => _response.Headers?.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateHeaderObjectAdapter(kvp.Value) as HeaderObject); 
             set => _response.Headers = value; 
         }
     }
 
     public class MediaTypeObjectAdapter : IMediaTypeObject
     {
-        private readonly MediaTypeObject _mediaType;
+        private readonly IMediaTypeObject _mediaType;
+        private readonly AdapterProvider _adapterProvider;
 
-        public MediaTypeObjectAdapter(MediaTypeObject mediaType)
+        public MediaTypeObjectAdapter(IMediaTypeObject mediaType, AdapterProvider adapterProvider)
         {
             _mediaType = mediaType;
+            _adapterProvider = adapterProvider;
         }
 
         public SchemaObject Schema 
         { 
-            get => _mediaType.Schema; 
+            get => _mediaType.Schema != null ? 
+                  _adapterProvider.CreateSchemaObjectAdapter(_mediaType.Schema) as SchemaObject : null; 
             set => _mediaType.Schema = value; 
         }
 
@@ -653,18 +732,22 @@ namespace SwaggerToCode.Adapters
 
         public Dictionary<string, ExampleObject> Examples 
         { 
-            get => _mediaType.Examples; 
+            get => _mediaType.Examples?.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => _adapterProvider.CreateExampleObjectAdapter(kvp.Value) as ExampleObject); 
             set => _mediaType.Examples = value; 
         }
     }
 
     public class HeaderObjectAdapter : IHeaderObject
     {
-        private readonly HeaderObject _header;
+        private readonly IHeaderObject _header;
+        private readonly AdapterProvider _adapterProvider;
 
-        public HeaderObjectAdapter(HeaderObject header)
+        public HeaderObjectAdapter(IHeaderObject header, AdapterProvider adapterProvider)
         {
             _header = header;
+            _adapterProvider = adapterProvider;
         }
 
         public string Description 
@@ -675,18 +758,21 @@ namespace SwaggerToCode.Adapters
 
         public SchemaObject Schema 
         { 
-            get => _header.Schema; 
+            get => _header.Schema != null ? 
+                  _adapterProvider.CreateSchemaObjectAdapter(_header.Schema) as SchemaObject : null; 
             set => _header.Schema = value; 
         }
     }
 
     public class ExampleObjectAdapter : IExampleObject
     {
-        private readonly ExampleObject _example;
+        private readonly IExampleObject _example;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ExampleObjectAdapter(ExampleObject example)
+        public ExampleObjectAdapter(IExampleObject example, AdapterProvider adapterProvider)
         {
             _example = example;
+            _adapterProvider = adapterProvider;
         }
 
         public string Summary 
@@ -716,11 +802,13 @@ namespace SwaggerToCode.Adapters
 
     public class SecuritySchemeObjectAdapter : ISecuritySchemeObject
     {
-        private readonly SecuritySchemeObject _securityScheme;
+        private readonly ISecuritySchemeObject _securityScheme;
+        private readonly AdapterProvider _adapterProvider;
 
-        public SecuritySchemeObjectAdapter(SecuritySchemeObject securityScheme)
+        public SecuritySchemeObjectAdapter(ISecuritySchemeObject securityScheme, AdapterProvider adapterProvider)
         {
             _securityScheme = securityScheme;
+            _adapterProvider = adapterProvider;
         }
 
         public string Type 
@@ -761,52 +849,61 @@ namespace SwaggerToCode.Adapters
 
         public OAuthFlowsObject Flows 
         { 
-            get => _securityScheme.Flows; 
+            get => _securityScheme.Flows != null ? 
+                  _adapterProvider.CreateOAuthFlowsObjectAdapter(_securityScheme.Flows) as OAuthFlowsObject : null; 
             set => _securityScheme.Flows = value; 
         }
     }
 
     public class OAuthFlowsObjectAdapter : IOAuthFlowsObject
     {
-        private readonly OAuthFlowsObject _oAuthFlows;
+        private readonly IOAuthFlowsObject _oAuthFlows;
+        private readonly AdapterProvider _adapterProvider;
 
-        public OAuthFlowsObjectAdapter(OAuthFlowsObject oAuthFlows)
+        public OAuthFlowsObjectAdapter(IOAuthFlowsObject oAuthFlows, AdapterProvider adapterProvider)
         {
             _oAuthFlows = oAuthFlows;
+            _adapterProvider = adapterProvider;
         }
 
         public OAuthFlowObject Implicit 
         { 
-            get => _oAuthFlows.Implicit; 
+            get => _oAuthFlows.Implicit != null ? 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.Implicit) as OAuthFlowObject : null; 
             set => _oAuthFlows.Implicit = value; 
         }
 
         public OAuthFlowObject Password 
         { 
-            get => _oAuthFlows.Password; 
+            get => _oAuthFlows.Password != null ? 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.Password) as OAuthFlowObject : null; 
             set => _oAuthFlows.Password = value; 
         }
 
         public OAuthFlowObject ClientCredentials 
         { 
-            get => _oAuthFlows.ClientCredentials; 
+            get => _oAuthFlows.ClientCredentials != null ? 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.ClientCredentials) as OAuthFlowObject : null; 
             set => _oAuthFlows.ClientCredentials = value; 
         }
 
         public OAuthFlowObject AuthorizationCode 
         { 
-            get => _oAuthFlows.AuthorizationCode; 
+            get => _oAuthFlows.AuthorizationCode != null ? 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.AuthorizationCode) as OAuthFlowObject : null; 
             set => _oAuthFlows.AuthorizationCode = value; 
         }
     }
 
     public class OAuthFlowObjectAdapter : IOAuthFlowObject
     {
-        private readonly OAuthFlowObject _oAuthFlow;
+        private readonly IOAuthFlowObject _oAuthFlow;
+        private readonly AdapterProvider _adapterProvider;
 
-        public OAuthFlowObjectAdapter(OAuthFlowObject oAuthFlow)
+        public OAuthFlowObjectAdapter(IOAuthFlowObject oAuthFlow, AdapterProvider adapterProvider)
         {
             _oAuthFlow = oAuthFlow;
+            _adapterProvider = adapterProvider;
         }
 
         public string AuthorizationUrl 
@@ -836,11 +933,13 @@ namespace SwaggerToCode.Adapters
 
     public class TagObjectAdapter : ITagObject
     {
-        private readonly TagObject _tag;
+        private readonly ITagObject _tag;
+        private readonly AdapterProvider _adapterProvider;
 
-        public TagObjectAdapter(TagObject tag)
+        public TagObjectAdapter(ITagObject tag, AdapterProvider adapterProvider)
         {
             _tag = tag;
+            _adapterProvider = adapterProvider;
         }
 
         public string Name 
@@ -857,18 +956,21 @@ namespace SwaggerToCode.Adapters
 
         public ExternalDocumentationObject ExternalDocs 
         { 
-            get => _tag.ExternalDocs; 
+            get => _tag.ExternalDocs != null ? 
+                  _adapterProvider.CreateExternalDocumentationObjectAdapter(_tag.ExternalDocs) as ExternalDocumentationObject : null; 
             set => _tag.ExternalDocs = value; 
         }
     }
 
     public class ExternalDocumentationObjectAdapter : IExternalDocumentationObject
     {
-        private readonly ExternalDocumentationObject _externalDocs;
+        private readonly IExternalDocumentationObject _externalDocs;
+        private readonly AdapterProvider _adapterProvider;
 
-        public ExternalDocumentationObjectAdapter(ExternalDocumentationObject externalDocs)
+        public ExternalDocumentationObjectAdapter(IExternalDocumentationObject externalDocs, AdapterProvider adapterProvider)
         {
             _externalDocs = externalDocs;
+            _adapterProvider = adapterProvider;
         }
 
         public string Description 

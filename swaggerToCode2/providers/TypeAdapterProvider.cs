@@ -6,5 +6,5 @@ namespace swaggerToCode2.providers;
 
 public interface TypeAdapterProvider
 {
-    TypeAdapter GetTypeAdapter(TemplateConfig templateConfigFor, string strName, SchemaObject schemaObj);
+    TypeAdapter GetTypeAdapter(TemplateConfig templateConfigFor, string strName, ISchemaObject schemaObj);
 }

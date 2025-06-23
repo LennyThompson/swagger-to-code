@@ -1,103 +1,85 @@
-
 using Microsoft.Extensions.Logging;
+using swaggerToCode.code_generators;
 using SwaggerToCode.Models;
 using SwaggerToCode.Services;
+using swaggerToCode2.providers;
 
 namespace SwaggerToCode
 {
-        // Example usage in a generator class
+    // Example usage in a generator class
     public class CodeGeneratorServiceImpl : CodeGeneratorService
     {
+        private readonly Func<string, CodeGenerator> _codeGeneratorFactory;
+
+        private readonly IOpenApiDocumentProvider _documentProvider;
         private readonly IConfigurationReader _configService;
         private readonly ITemplateManagerService _templateManager;
+        private readonly TemplateConfigContextProvider _templateConfigContextProvider;
+        private readonly AdapterProvider _adapterProvider;
         private readonly ILogger<CodeGeneratorServiceImpl> _logger;
 
         public CodeGeneratorServiceImpl
         (
-            IConfigurationReader configService, 
+            IOpenApiDocumentProvider documentProvider,
+            IConfigurationReader configService,
             ITemplateManagerService templateManager,
+            TemplateConfigContextProvider templateConfigContextProvider,
+            Func<string, CodeGenerator> codeGeneratorFactory,
+            AdapterProvider adapterProvider,
             ILogger<CodeGeneratorServiceImpl> logger
         )
         {
+            _codeGeneratorFactory = codeGeneratorFactory;
+            _documentProvider = documentProvider;
             _configService = configService;
             _templateManager = templateManager;
+            _templateConfigContextProvider = templateConfigContextProvider;
+            _adapterProvider = adapterProvider;
             _logger = logger;
         }
 
-        public void GenerateCode<T>(T model) where T : GenerateTarget
+        public bool ProcessOpenApiDocuments(string outputDirectory)
         {
-            // Get active templates from configuration
-            var templateConfigs = _configService.Configuration.TemplateConfigs;
-            
-            foreach (var templateConfig in templateConfigs.Where(templateConfig => templateConfig.Target == model.TargetType))
+            // Create output directory if it doesn't exist
+            if (!Directory.Exists(outputDirectory))
             {
-                // Check if the template is meant to be used
-                if (!templateConfig.Use)
-                    continue;
+                Directory.CreateDirectory(outputDirectory);
+                _logger.LogInformation($"Created output directory: {outputDirectory}");
+            }
 
-                try
+
+            // Process each OpenAPI document
+            foreach (var document in _documentProvider.Documents)
+            {
+                _logger.LogInformation($"Processing document {document.SwaggerFile}");
+                _logger.LogInformation(
+                    $"Document contains {document.Paths.Count} paths and {document.Components.Schemas.Count} schemas");
+
+                foreach (var templateConfig in _configService.Configuration.TemplateConfigs.Where(template => template.Use))
                 {
-                    // Get the template parameters from configuration
-                    var templateParams = templateConfig.GenerateParams;
-                    
-                    // Check if the model has all required parameters
-                    bool hasAllParams = true;
-                    var modelParams = new Dictionary<string, object>();
-                    
-                    foreach (var param in templateParams)
-                    {
-                        try
-                        {
-                            var value = model.Parameters[param];
-                            if (value != null)
-                            {
-                                modelParams[param] = value.Model;
-                            }
-                            else
-                            {
-                                hasAllParams = false;
-                                break;
-                            }
-                        }
-                        catch
-                        {
-                            hasAllParams = false;
-                            break;
-                        }
-                    }
-                    
-                    if (!hasAllParams)
-                        continue;
-                    
-                    // Get the template name from configuration
-                    string templateName = templateConfig.Template;
-                    
-                    // Render the template with the model
-                    string generatedCode = _templateManager.RenderTemplate(templateName, modelParams);
-                    
-                    // Determine output path
-                    string outputRootPath = _configService.Configuration.GetRootPath(templateConfig.PathRoot);
-                    string outputPath = Path.Combine(outputRootPath, templateConfig.Path);
-                    
-                    // Ensure directory exists
-                    Directory.CreateDirectory(outputPath);
-                    
-                    // Create file name
-                    string fileName = $"{model.TargetName}{templateConfig.FileExtension}";
-                    string filePath = Path.Combine(outputPath, fileName);
-                    
-                    // Write to file
-                    File.WriteAllText(filePath, generatedCode);
-                    
-                    Console.WriteLine($"Generated: {filePath}");
+                    _templateConfigContextProvider.SetContext(templateConfig, document);
+                    GenerateCode();
                 }
-                catch (Exception ex)
+
+            }
+
+            return true;
+        }
+
+        private void GenerateCode()
+        {
+            foreach (var generator in _templateConfigContextProvider.CurrentTemplateConfig.Generators)
+            {
+                var codeGenerator = _codeGeneratorFactory(generator);
+                if (codeGenerator != null)
                 {
-                    Console.WriteLine($"Error generating code for template {templateConfig.Template}: {ex.Message}");
+                    codeGenerator.GenerateAll();
+                }
+                else
+                {
+                    _logger.LogError($"Could not match {generator} to any known code generator");
                 }
             }
         }
     }
-
 }
-

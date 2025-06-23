@@ -202,10 +202,10 @@ public class CppTypeAdapter : TypeAdapter
     private string _strName;
     private string _strSwaggerType;
     private string _strSwaggerFormat;
-    private SchemaObject? _schemaObject;
+    private ISchemaObject? _schemaObject;
     private NameConverterBuilder _converter;
 
-    public CppTypeAdapter(string strName, string strSwaggerType, string strSwaggerFormat, NameConverterBuilder nameConverter, SchemaObject? schemaObject)
+    public CppTypeAdapter(string strName, string strSwaggerType, string strSwaggerFormat, NameConverterBuilder nameConverter, ISchemaObject? schemaObject)
     {
         _strName = strName;
         _strSwaggerType = strSwaggerType;

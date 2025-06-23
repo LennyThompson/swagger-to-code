@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using OpenApi.Models;
 using SwaggerToCode.Adapters;
 
@@ -5,118 +6,128 @@ namespace swaggerToCode2.providers;
 
 public class AdapterProviderImpl : AdapterProvider
 {
-    public IOpenApiDocument CreateOpenApiDocumentAdapter(OpenApiDocument document)
+    private readonly TypeAdapterProvider _typeAdapterProvider;
+    private readonly ILogger<AdapterProviderImpl> _logger;
+    
+    public AdapterProviderImpl(TypeAdapterProvider typeAdapterProvider, ILogger<AdapterProviderImpl> logger)
     {
-        return new OpenApiDocumentAdapter(document);
+        _typeAdapterProvider = typeAdapterProvider;
+        _logger = logger;
+    }
+    
+    
+    public IOpenApiDocument CreateOpenApiDocumentAdapter(IOpenApiDocument document)
+    {
+        return new OpenApiDocumentAdapter(document, this);
     }
 
-    public IInfoObject CreateInfoObjectAdapter(InfoObject info)
+    public IInfoObject CreateInfoObjectAdapter(IInfoObject info)
     {
-        return new InfoObjectAdapter(info);
+        return new InfoObjectAdapter(info, this);
     }
 
-    public IContactObject CreateContactObjectAdapter(ContactObject contact)
+    public IContactObject CreateContactObjectAdapter(IContactObject contact)
     {
-        return new ContactObjectAdapter(contact);
+        return new ContactObjectAdapter(contact, this);
     }
 
-    public ILicenseObject CreateLicenseObjectAdapter(LicenseObject license)
+    public ILicenseObject CreateLicenseObjectAdapter(ILicenseObject license)
     {
-        return new LicenseObjectAdapter(license);
+        return new LicenseObjectAdapter(license, this);
     }
 
-    public IServerObject CreateServerObjectAdapter(ServerObject server)
+    public IServerObject CreateServerObjectAdapter(IServerObject server)
     {
-        return new ServerObjectAdapter(server);
+        return new ServerObjectAdapter(server, this);
     }
 
-    public IServerVariableObject CreateServerVariableObjectAdapter(ServerVariableObject serverVariable)
+    public IServerVariableObject CreateServerVariableObjectAdapter(IServerVariableObject serverVariable)
     {
-        return new ServerVariableObjectAdapter(serverVariable);
+        return new ServerVariableObjectAdapter(serverVariable, this);
     }
 
-    public IComponentsObject CreateComponentsObjectAdapter(ComponentsObject components)
+    public IComponentsObject CreateComponentsObjectAdapter(IComponentsObject components)
     {
-        return new ComponentsObjectAdapter(components);
+        return new ComponentsObjectAdapter(components, this);
     }
 
-    public ISchemaObject CreateSchemaObjectAdapter(SchemaObject schema)
+    public ISchemaObject CreateSchemaObjectAdapter(ISchemaObject schema)
     {
-        return new SchemaObjectAdapter(schema);
+        return new SchemaObjectAdapter(schema, this);
     }
 
-    public ISchemaObjectField CreateSchemaObjectFieldAdapter(SchemaObjectField field)
+    public ISchemaObjectField CreateSchemaObjectFieldAdapter(ISchemaObjectField field)
     {
-        return new SchemaObjectFieldAdapter(field);
+        return new SchemaObjectFieldAdapter(field, this);
     }
 
-    public IDiscriminatorObject CreateDiscriminatorObjectAdapter(DiscriminatorObject discriminator)
+    public IDiscriminatorObject CreateDiscriminatorObjectAdapter(IDiscriminatorObject discriminator)
     {
-        return new DiscriminatorObjectAdapter(discriminator);
+        return new DiscriminatorObjectAdapter(discriminator, this);
     }
 
-    public IPathItemObject CreatePathItemObjectAdapter(PathItemObject pathItem)
+    public IPathItemObject CreatePathItemObjectAdapter(IPathItemObject pathItem)
     {
-        return new PathItemObjectAdapter(pathItem);
+        return new PathItemObjectAdapter(pathItem, this);
     }
 
-    public IOperationObject CreateOperationObjectAdapter(OperationObject operation)
+    public IOperationObject CreateOperationObjectAdapter(IOperationObject operation)
     {
-        return new OperationObjectAdapter(operation);
+        return new OperationObjectAdapter(operation, this);
     }
 
-    public IParameterObject CreateParameterObjectAdapter(ParameterObject parameter)
+    public IParameterObject CreateParameterObjectAdapter(IParameterObject parameter)
     {
-        return new ParameterObjectAdapter(parameter);
+        return new ParameterObjectAdapter(parameter, this);
     }
 
-    public IRequestBodyObject CreateRequestBodyObjectAdapter(RequestBodyObject requestBody)
+    public IRequestBodyObject CreateRequestBodyObjectAdapter(IRequestBodyObject requestBody)
     {
-        return new RequestBodyObjectAdapter(requestBody);
+        return new RequestBodyObjectAdapter(requestBody, this);
     }
 
-    public IResponseObject CreateResponseObjectAdapter(ResponseObject response)
+    public IResponseObject CreateResponseObjectAdapter(IResponseObject response)
     {
-        return new ResponseObjectAdapter(response);
+        return new ResponseObjectAdapter(response, this);
     }
 
-    public IMediaTypeObject CreateMediaTypeObjectAdapter(MediaTypeObject mediaType)
+    public IMediaTypeObject CreateMediaTypeObjectAdapter(IMediaTypeObject mediaType)
     {
-        return new MediaTypeObjectAdapter(mediaType);
+        return new MediaTypeObjectAdapter(mediaType, this);
     }
 
-    public IHeaderObject CreateHeaderObjectAdapter(HeaderObject header)
+    public IHeaderObject CreateHeaderObjectAdapter(IHeaderObject header)
     {
-        return new HeaderObjectAdapter(header);
+        return new HeaderObjectAdapter(header, this);
     }
 
-    public IExampleObject CreateExampleObjectAdapter(ExampleObject example)
+    public IExampleObject CreateExampleObjectAdapter(IExampleObject example)
     {
-        return new ExampleObjectAdapter(example);
+        return new ExampleObjectAdapter(example, this);
     }
 
-    public ISecuritySchemeObject CreateSecuritySchemeObjectAdapter(SecuritySchemeObject securityScheme)
+    public ISecuritySchemeObject CreateSecuritySchemeObjectAdapter(ISecuritySchemeObject securityScheme)
     {
-        return new SecuritySchemeObjectAdapter(securityScheme);
+        return new SecuritySchemeObjectAdapter(securityScheme, this);
     }
 
-    public IOAuthFlowsObject CreateOAuthFlowsObjectAdapter(OAuthFlowsObject oAuthFlows)
+    public IOAuthFlowsObject CreateOAuthFlowsObjectAdapter(IOAuthFlowsObject oAuthFlows)
     {
-        return new OAuthFlowsObjectAdapter(oAuthFlows);
+        return new OAuthFlowsObjectAdapter(oAuthFlows, this);
     }
 
-    public IOAuthFlowObject CreateOAuthFlowObjectAdapter(OAuthFlowObject oAuthFlow)
+    public IOAuthFlowObject CreateOAuthFlowObjectAdapter(IOAuthFlowObject oAuthFlow)
     {
-        return new OAuthFlowObjectAdapter(oAuthFlow);
+        return new OAuthFlowObjectAdapter(oAuthFlow, this);
     }
 
-    public ITagObject CreateTagObjectAdapter(TagObject tag)
+    public ITagObject CreateTagObjectAdapter(ITagObject tag)
     {
-        return new TagObjectAdapter(tag);
+        return new TagObjectAdapter(tag, this);
     }
 
-    public IExternalDocumentationObject CreateExternalDocumentationObjectAdapter(ExternalDocumentationObject externalDocs)
+    public IExternalDocumentationObject CreateExternalDocumentationObjectAdapter(IExternalDocumentationObject externalDocs)
     {
-        return new ExternalDocumentationObjectAdapter(externalDocs);
+        return new ExternalDocumentationObjectAdapter(externalDocs, this);
     }
 }

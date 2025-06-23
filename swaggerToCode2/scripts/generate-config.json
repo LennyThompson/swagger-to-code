@@ -8,7 +8,8 @@
       "file-extension": ".h",
       "path-root": "CppRoot",
       "path": "comp/include",
-      "target": "each-model",
+      "target": ["each-model"],
+      "generators": ["schema-obj"],
       "generate-type": "cpp",
       "generate-params": ["model"],
       "use": true

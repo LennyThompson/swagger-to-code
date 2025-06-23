@@ -22,7 +22,7 @@ public class OpenApiGenerateTarget : GenerateTarget
     private string _strType;
     private Dictionary<string, TemplateParameter> _mapTemplateParams;
     
-    public OpenApiGenerateTarget(string strName, OpenApiDocument doc, IPathItemObject pathItemTarget)
+    public OpenApiGenerateTarget(string strName, IOpenApiDocument doc, IPathItemObject pathItemTarget)
     {
         _strName = strName;
         _strType = "each-path";
@@ -32,7 +32,7 @@ public class OpenApiGenerateTarget : GenerateTarget
         _mapTemplateParams["path"] = new TemplateParameterImpl("path", pathItemTarget);
     }
 
-    public OpenApiGenerateTarget(string strName, OpenApiDocument doc)
+    public OpenApiGenerateTarget(string strName, IOpenApiDocument doc)
     {
         _strName = strName;
         _strType = "all";
@@ -44,7 +44,7 @@ public class OpenApiGenerateTarget : GenerateTarget
         _mapTemplateParams["models"] = new TemplateParameterImpl("models", doc.Components.Schemas.Values);
     }
 
-    public OpenApiGenerateTarget(string strName, OpenApiDocument doc, ISchemaObject schemaObject)
+    public OpenApiGenerateTarget(string strName, IOpenApiDocument doc, ISchemaObject schemaObject)
     {
         _strName = strName;
         _strType = "each-model";
