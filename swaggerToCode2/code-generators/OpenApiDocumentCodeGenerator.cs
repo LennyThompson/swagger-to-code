@@ -11,11 +11,12 @@ public class OpenApiDocumentCodeGenerator : CodeGeneratorImpl
     public OpenApiDocumentCodeGenerator
     (
         TemplateConfigContextProvider templateConfigContextProvider, 
+        ITemplateManagerService templateManager,
         AdapterProvider adapterProvider,
         OutputFileProvider outputFileProvider,
         ILogger<CodeGeneratorImpl> logger
     )
-    : base("open-api-doc", templateConfigContextProvider, outputFileProvider, logger)
+    : base("open-api-doc", templateConfigContextProvider, templateManager, outputFileProvider, logger)
     {
         _adapterProvider = adapterProvider;
     }

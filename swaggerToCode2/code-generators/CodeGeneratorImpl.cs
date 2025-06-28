@@ -13,16 +13,18 @@ public abstract class CodeGeneratorImpl : CodeGenerator
     protected readonly ILogger<CodeGeneratorImpl> _logger;
     protected string _strName;
 
-    public CodeGeneratorImpl
+    protected CodeGeneratorImpl
     (
         string strName,
         TemplateConfigContextProvider templateConfigContextProvider, 
+        ITemplateManagerService templateManager,
         OutputFileProvider outputFileProvider,
         ILogger<CodeGeneratorImpl> logger
     )
     {
         _strName = strName;
         _templateConfigContextProvider = templateConfigContextProvider;
+        _templateManager = templateManager;
         _outputFileProvider = outputFileProvider;
         _logger = logger;
     }

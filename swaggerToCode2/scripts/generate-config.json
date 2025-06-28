@@ -5,7 +5,7 @@
   "templates": [
     {
       "template": "generateCPPHeaderFromComponent",
-      "file-extension": ".h",
+      "file-extension": "h",
       "path-root": "CppRoot",
       "path": "comp/include",
       "target": ["each-model"],

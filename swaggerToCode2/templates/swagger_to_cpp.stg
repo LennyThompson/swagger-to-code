@@ -1,12 +1,12 @@
 
 fieldAsMember(field)::=
-<%<field.type> _<field.prefix><field.name>;%>
+<%<field.typeName> _<field.prefix><field.outputName>;%>
 
 generateCPPHeaderFromComponent(schema, model)::=
 <<
 struct <model.name>
 {
-    <model.fields:{field|<fieldAsMember(field)>};seperator="\n">
+    <model.fields:{field|<fieldAsMember(field)>};separator="\n">
     
     rapidjson::Value bool toJson() const;
     static <model.name> fromJson(rapidjson::Document& docFrom);

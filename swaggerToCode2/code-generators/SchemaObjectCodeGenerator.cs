@@ -11,11 +11,12 @@ public class SchemaObjectCodeGenerator : CodeGeneratorImpl
     public SchemaObjectCodeGenerator
     (
         TemplateConfigContextProvider templateConfigContextProvider, 
+        ITemplateManagerService templateManager,
         AdapterProvider adapterProvider,
         OutputFileProvider outputFileProvider,
         ILogger<CodeGeneratorImpl> logger
     )
-    : base("schema-obj", templateConfigContextProvider, outputFileProvider, logger)
+    : base("schema-obj", templateConfigContextProvider, templateManager, outputFileProvider, logger)
     {
         _adapterProvider = adapterProvider;
     }

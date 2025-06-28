@@ -11,11 +11,12 @@ public class PathCodeGenerator : CodeGeneratorImpl
     public PathCodeGenerator
     (
         TemplateConfigContextProvider templateConfigContextProvider, 
+        ITemplateManagerService templateManager,
         AdapterProvider adapterProvider,
         OutputFileProvider outputFileProvider,
         ILogger<CodeGeneratorImpl> logger
     )
-    : base("path-item", templateConfigContextProvider, outputFileProvider, logger)
+    : base("path-item", templateConfigContextProvider, templateManager, outputFileProvider, logger)
     {
         _adapterProvider = adapterProvider;
     }

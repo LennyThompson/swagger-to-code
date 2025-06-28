@@ -75,10 +75,36 @@ namespace OpenApi.Models
                         .SelectMany(x => x ?? Array.Empty<SchemaObject>())
                 })
                 .SelectMany(x => x ?? Array.Empty<SchemaObject>())
-                .Where(schema => schema != null && !string.IsNullOrEmpty(schema.Ref));
+                .Where(schema => schema != null && schema.IsReference);
 
-            // Update each schema reference
-            schemaReferences
+            UpdateReferenceObjects(schemaReferences);
+            UpdateSchemaObjectReferences();
+            return true;
+        }
+
+        private bool UpdateSchemaObjectReferences()
+        {
+            // Collect references from schema fields
+            var listRefs = Components.Schemas
+                .SelectMany(schema => schema.Value.Fields
+                    .Where(field => field.Field.IsReference || (field.Field.IsArrayType && field.Field.Items?.IsReference == true))
+                    .Select(field => field.Field.IsReference ? field.Field : field.Field.Items));
+            
+            // Collect references from array items
+            var listItemRefs = Components.Schemas
+                .Where(schema => schema.Value.IsArrayType && schema.Value.Items?.IsReference == true)
+                .Select(schema => schema.Value.Items as ISchemaObject)
+                .Where(item => item != null);
+
+
+            UpdateReferenceObjects(listRefs.Concat(listItemRefs));
+            return true;
+            
+        }
+
+        private void UpdateReferenceObjects(IEnumerable<ISchemaObject> listSchemaRefs)
+        {
+            listSchemaRefs
                 .ToList()
                 .ForEach(schemaRef =>
                 {
@@ -88,9 +114,9 @@ namespace OpenApi.Models
                         schemaRef.ReferenceSchemaObject = referencedSchema;
                     }
                 });
-            return true;
         }
     }
+
     
     
 
@@ -178,92 +204,6 @@ namespace OpenApi.Models
         public Dictionary<string, SecuritySchemeObject> SecuritySchemes { get; set; }
     }
 
-    public class SchemaObject : ISchemaObject
-    {
-        private readonly Dictionary<string, object> _vendorExtensions = new();
-
-        [YamlMember(Alias = "$ref")]
-        public string Ref { get; set; }
-
-        [YamlMember(Alias = "type")]
-        public string Type { get; set; }
-
-        [YamlMember(Alias = "format")]
-        public string Format { get; set; }
-
-        [YamlMember(Alias = "properties")]
-        public Dictionary<string, SchemaObject> Properties { get; set; }
-
-        [YamlMember(Alias = "items")]
-        public SchemaObject Items { get; set; }
-
-        [YamlMember(Alias = "required")]
-        public List<string> Required { get; set; }
-
-        [YamlMember(Alias = "enum")]
-        public List<string> Enum { get; set; }
-
-        [YamlMember(Alias = "allOf")]
-        public List<SchemaObject> AllOf { get; set; }
-
-        [YamlMember(Alias = "oneOf")]
-        public List<SchemaObject> OneOf { get; set; }
-
-        [YamlMember(Alias = "anyOf")]
-        public List<SchemaObject> AnyOf { get; set; }
-
-        [YamlMember(Alias = "description")]
-        public string Description { get; set; }
-
-        [YamlMember(Alias = "default")]
-        public object Default { get; set; }
-
-        [YamlMember(Alias = "additionalProperties")]
-        public object AdditionalProperties { get; set; }
-        
-        [YamlMember(Alias = "discriminator")]
-        public DiscriminatorObject Discriminator { get; set; }
-        
-        [YamlIgnore] public Dictionary<string, object> VendorExtensions => _vendorExtensions;
-
-        [YamlIgnore] public object this[string key]
-        {
-            get => _vendorExtensions.TryGetValue(key, out var value) ? value : null;
-            set
-            {
-                if (key.StartsWith("x-"))
-                {
-                    _vendorExtensions[key] = value;
-                }
-            }
-        }
-
-        [YamlIgnore] public string Name { get; set; }
-        [YamlIgnore] public bool IsReference => ReferenceSchemaObject != null || !string.IsNullOrEmpty(Ref);
-        [YamlIgnore] public bool IsSimpleType => Type == "string" || Type == "number" || Type == "integer" || Type == "boolean";
-        [YamlIgnore] public SchemaObject? ReferenceSchemaObject { get; set; }
-        [YamlIgnore] public List<SchemaObjectField> Fields => IsReference ? 
-            ReferenceSchemaObject.Fields : 
-            Properties?.Keys.Select(propName => new SchemaObjectField(this, propName, Properties[propName])).ToList() ?? new List<SchemaObjectField>();
-    }
-
-    public class SchemaObjectField : ISchemaObjectField
-    {
-        private SchemaObject _parent;
-        private SchemaObject _field;
-        private string _strName;
-        public SchemaObjectField(SchemaObject objParent, string strName, SchemaObject property)
-        {
-            _parent = objParent;
-            _strName = strName;
-            _field = property;
-        }
-
-        public SchemaObject Parent => _parent;
-        public string Name => _strName;
-        public SchemaObject Field => _field;
-    }
-
     public class DiscriminatorObject : IDiscriminatorObject
     {
         [YamlMember(Alias = "propertyName")]
@@ -273,99 +213,6 @@ namespace OpenApi.Models
         public Dictionary<string, string> Mapping { get; set; }
     }
     
-    public class PathItemObject : IPathItemObject
-    {
-        [YamlMember(Alias = "summary")]
-        public string Summary { get; set; }
-
-        [YamlMember(Alias = "description")]
-        public string Description { get; set; }
-
-        [YamlMember(Alias = "get")]
-        public OperationObject Get { get; set; }
-
-        [YamlMember(Alias = "put")]
-        public OperationObject Put { get; set; }
-
-        [YamlMember(Alias = "post")]
-        public OperationObject Post { get; set; }
-
-        [YamlMember(Alias = "delete")]
-        public OperationObject Delete { get; set; }
-
-        [YamlMember(Alias = "parameters")]
-        public List<ParameterObject> Parameters { get; set; }
-    }
-
-    public class OperationObject : IOperationObject
-    {
-        [YamlMember(Alias = "tags")]
-        public List<string> Tags { get; set; }
-
-        [YamlMember(Alias = "summary")]
-        public string Summary { get; set; }
-
-        [YamlMember(Alias = "description")]
-        public string Description { get; set; }
-
-        [YamlMember(Alias = "operationId")]
-        public string OperationId { get; set; }
-
-        [YamlMember(Alias = "parameters")]
-        public List<ParameterObject> Parameters { get; set; }
-
-        [YamlMember(Alias = "requestBody")]
-        public RequestBodyObject RequestBody { get; set; }
-
-        [YamlMember(Alias = "responses")]
-        public Dictionary<string, ResponseObject> Responses { get; set; }
-
-        [YamlMember(Alias = "security")]
-        public List<Dictionary<string, List<string>>> Security { get; set; }
-    }
-
-    public class ParameterObject : IParameterObject
-    {
-        [YamlMember(Alias = "name")]
-        public string Name { get; set; }
-
-        [YamlMember(Alias = "in")]
-        public string In { get; set; }
-
-        [YamlMember(Alias = "description")]
-        public string Description { get; set; }
-
-        [YamlMember(Alias = "required")]
-        public bool Required { get; set; }
-
-        [YamlMember(Alias = "schema")]
-        public SchemaObject Schema { get; set; }
-    }
-
-    public class RequestBodyObject : IRequestBodyObject
-    {
-        [YamlMember(Alias = "description")]
-        public string Description { get; set; }
-
-        [YamlMember(Alias = "required")]
-        public bool Required { get; set; }
-
-        [YamlMember(Alias = "content")]
-        public Dictionary<string, MediaTypeObject> Content { get; set; }
-    }
-
-    public class ResponseObject : IResponseObject
-    {
-        [YamlMember(Alias = "description")]
-        public string Description { get; set; }
-
-        [YamlMember(Alias = "content")]
-        public Dictionary<string, MediaTypeObject> Content { get; set; }
-
-        [YamlMember(Alias = "headers")]
-        public Dictionary<string, HeaderObject> Headers { get; set; }
-    }
-
     public class MediaTypeObject : IMediaTypeObject
     {
         [YamlMember(Alias = "schema")]

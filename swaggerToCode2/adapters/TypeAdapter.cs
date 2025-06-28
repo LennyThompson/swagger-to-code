@@ -26,7 +26,7 @@ public class SnakeToCamelCaseAdapter : NameConverter
     }
     protected string FromCase(char separator)
     {
-        if (string.IsNullOrEmpty(Name))
+        if (string.IsNullOrEmpty(Name) || !Name.Contains(separator))
         {
             return Name;
         }
@@ -201,7 +201,7 @@ public class CppTypeAdapter : TypeAdapter
 {
     private string _strName;
     private string _strSwaggerType;
-    private string _strSwaggerFormat;
+    private string? _strSwaggerFormat;
     private ISchemaObject? _schemaObject;
     private NameConverterBuilder _converter;
 
@@ -219,11 +219,11 @@ public class CppTypeAdapter : TypeAdapter
     public string OutputName => _converter(Name).ConvertedName;
 
     public string TypeName => SwaggerTypeToCpp();
-    public string ListTypeName => $"std::string<{TypeName}>";
+    public string ListTypeName => $"std::vector<{TypeName}>";
     public string Prefix => SwaggerTypeToCppPrefix();
     public string MemberPrefix => $"_{Prefix}";
 
-    public bool IsComponentType => _schemaObject != null;
+    public bool IsComponentType => _schemaObject != null && !_schemaObject.IsSimpleType;
     
     private string SwaggerTypeToCpp()
     {
@@ -234,6 +234,10 @@ public class CppTypeAdapter : TypeAdapter
         switch (_strSwaggerType)
         {
             case "string":
+                if (string.IsNullOrEmpty(_strSwaggerFormat))
+                {
+                    return "std::string";
+                }
                 switch (_strSwaggerFormat)
                 {
                     case "date-time":

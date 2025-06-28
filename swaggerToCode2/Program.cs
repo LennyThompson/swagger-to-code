@@ -47,7 +47,6 @@ public class Program
             // Create a scoped service collection
             var scopedProvider = ConfigureServices(configFile.FullName);
 
-
             // Get services
             var logger = scopedProvider.GetRequiredService<ILogger<Program>>();
             var configReader = scopedProvider.GetRequiredService<IConfigurationReader>();
@@ -124,9 +123,9 @@ public class Program
                 .AddTemplateConfigContextProvider()
                 .AddCodeGeneratorService()
                 .AddTypeAdapterProvider()
-                .AddAdapterProvider()
+                .AddOutputFileProvider()
                 .AddCodeGenerators()
-                .AddOutputFileProvider();
+                .AddAdapterProvider();
 
             // Build the service provider
             return services.BuildServiceProvider();

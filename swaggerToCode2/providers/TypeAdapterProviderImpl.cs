@@ -32,7 +32,7 @@ public class TypeAdapterProviderImpl : TypeAdapterProvider
                     strName, 
                     schemaObj.Type, 
                     schemaObj.Format,
-                    (string strName) => { return new SnakeToCamelCaseAdapter(strName); }, 
+                    (string strName) => { return new CamelToPascalCaseAdapter(new SnakeToCamelCaseAdapter(strName)); }, 
                     schemaObj
                 );
             default:

@@ -10,7 +10,7 @@ public class OutputFileProviderImpl : OutputFileProvider
     private readonly TemplateConfigContextProvider _templateConfigContextProvider;
     private readonly ILogger<OutputFileProviderImpl> _logger;
 
-    OutputFileProviderImpl
+    public OutputFileProviderImpl
     (
         IConfigurationReader configService,
         TemplateConfigContextProvider templateConfigContextProvider,

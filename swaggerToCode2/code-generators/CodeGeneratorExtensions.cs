@@ -9,8 +9,11 @@ namespace SwaggerToCode
         public static IServiceCollection AddCodeGenerators(this IServiceCollection services)
         {
             services.AddSingleton<CodeGenerator, OpenApiDocumentCodeGenerator>();
+            services.AddSingleton<OpenApiDocumentCodeGenerator>();
             services.AddSingleton<CodeGenerator, PathCodeGenerator>();
+            services.AddSingleton<PathCodeGenerator>();
             services.AddSingleton<CodeGenerator, SchemaObjectCodeGenerator>();
+            services.AddSingleton<SchemaObjectCodeGenerator>();
             services.AddSingleton<Func<string, CodeGenerator?>>(provider => key =>
             {
                 return key switch

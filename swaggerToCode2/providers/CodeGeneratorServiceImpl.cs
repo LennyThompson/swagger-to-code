@@ -9,7 +9,7 @@ namespace SwaggerToCode
     // Example usage in a generator class
     public class CodeGeneratorServiceImpl : CodeGeneratorService
     {
-        private readonly Func<string, CodeGenerator> _codeGeneratorFactory;
+        private readonly Func<string, CodeGenerator?> _codeGeneratorFactory;
 
         private readonly IOpenApiDocumentProvider _documentProvider;
         private readonly IConfigurationReader _configService;
@@ -24,7 +24,7 @@ namespace SwaggerToCode
             IConfigurationReader configService,
             ITemplateManagerService templateManager,
             TemplateConfigContextProvider templateConfigContextProvider,
-            Func<string, CodeGenerator> codeGeneratorFactory,
+            Func<string, CodeGenerator?> codeGeneratorFactory,
             AdapterProvider adapterProvider,
             ILogger<CodeGeneratorServiceImpl> logger
         )

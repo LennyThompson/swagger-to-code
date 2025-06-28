@@ -85,15 +85,16 @@ namespace OpenApi.Models
         string Name { get; set; }
         bool IsReference { get; }
         bool IsSimpleType { get; }
+        bool IsArrayType { get; }
         SchemaObject? ReferenceSchemaObject { get; set; }
-        List<SchemaObjectField> Fields { get; }
+        List<ISchemaObjectField> Fields { get; }
     }
 
     public interface ISchemaObjectField
     {
-        SchemaObject Parent { get; }
+        ISchemaObject Parent { get; }
         string Name { get; }
-        SchemaObject Field { get; }
+        ISchemaObject Field { get; }
     }
 
     public interface IDiscriminatorObject

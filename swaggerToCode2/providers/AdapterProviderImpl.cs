@@ -7,11 +7,18 @@ namespace swaggerToCode2.providers;
 public class AdapterProviderImpl : AdapterProvider
 {
     private readonly TypeAdapterProvider _typeAdapterProvider;
+    private readonly TemplateConfigContextProvider _templateContextProvider;
     private readonly ILogger<AdapterProviderImpl> _logger;
     
-    public AdapterProviderImpl(TypeAdapterProvider typeAdapterProvider, ILogger<AdapterProviderImpl> logger)
+    public AdapterProviderImpl
+    (
+        TypeAdapterProvider typeAdapterProvider, 
+        TemplateConfigContextProvider templateContextProvider, 
+        ILogger<AdapterProviderImpl> logger
+    )
     {
         _typeAdapterProvider = typeAdapterProvider;
+        _templateContextProvider = templateContextProvider;
         _logger = logger;
     }
     
@@ -53,12 +60,12 @@ public class AdapterProviderImpl : AdapterProvider
 
     public ISchemaObject CreateSchemaObjectAdapter(ISchemaObject schema)
     {
-        return new SchemaObjectAdapter(schema, this);
+        return new SchemaObjectAdapter(schema, this, _typeAdapterProvider, _templateContextProvider.CurrentTemplateConfig);
     }
 
     public ISchemaObjectField CreateSchemaObjectFieldAdapter(ISchemaObjectField field)
     {
-        return new SchemaObjectFieldAdapter(field, this);
+        return new SchemaObjectFieldAdapter(field, this, _typeAdapterProvider, _templateContextProvider.CurrentTemplateConfig);
     }
 
     public IDiscriminatorObject CreateDiscriminatorObjectAdapter(IDiscriminatorObject discriminator)
