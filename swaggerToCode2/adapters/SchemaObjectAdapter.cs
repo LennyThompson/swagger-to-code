@@ -43,15 +43,15 @@ namespace SwaggerToCode.Adapters
             set => _schema.Format = value;
         }
 
-        public Dictionary<string, SchemaObject> Properties
+        public Dictionary<string, ISchemaObject>? Properties
         {
-            get => _schema.Properties.ToDictionary(
+            get => _schema.Properties?.ToDictionary(
                 kvp => kvp.Key,
-                kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Value) as SchemaObject);
+                kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Value)) ?? null;
             set => _schema.Properties = value;
         }
 
-        public SchemaObject Items
+        public ISchemaObject? Items
         {
             get => _schema.Items != null
                 ? _adapterProvider.CreateSchemaObjectAdapter(_schema.Items) as SchemaObject
@@ -71,24 +71,24 @@ namespace SwaggerToCode.Adapters
             set => _schema.Enum = value;
         }
 
-        public List<SchemaObject> AllOf
+        public List<ISchemaObject>? AllOf
         {
             get => _schema.AllOf?.Select(schema =>
-                _adapterProvider.CreateSchemaObjectAdapter(schema) as SchemaObject).ToList();
+                _adapterProvider.CreateSchemaObjectAdapter(schema)).ToList() ?? null;
             set => _schema.AllOf = value;
         }
 
-        public List<SchemaObject> OneOf
+        public List<ISchemaObject>? OneOf
         {
             get => _schema.OneOf?.Select(schema =>
-                _adapterProvider.CreateSchemaObjectAdapter(schema) as SchemaObject).ToList();
+                _adapterProvider.CreateSchemaObjectAdapter(schema)).ToList() ?? null;
             set => _schema.OneOf = value;
         }
 
-        public List<SchemaObject> AnyOf
+        public List<ISchemaObject>? AnyOf
         {
             get => _schema.AnyOf?.Select(schema =>
-                _adapterProvider.CreateSchemaObjectAdapter(schema) as SchemaObject).ToList();
+                _adapterProvider.CreateSchemaObjectAdapter(schema)).ToList() ?? null;
             set => _schema.AnyOf = value;
         }
 
@@ -119,6 +119,8 @@ namespace SwaggerToCode.Adapters
         }
 
         public Dictionary<string, object> VendorExtensions => _schema.VendorExtensions;
+        public object? Example { get => _schema.Example; set => _schema.Example = value; }
+        public Dictionary<string, IExampleObject>? Examples { get => _schema.Examples; set => _schema.Examples = value; }
 
         public object this[string key]
         {
@@ -141,9 +143,10 @@ namespace SwaggerToCode.Adapters
 
         public bool IsSimpleType => _schema.IsSimpleType;
 
-        public bool IsArrayType => _schema.IsSimpleType;
+        public bool IsArrayType => _schema.IsArrayType;
+        public bool IsObjectType => _schema.IsObjectType;
 
-        public SchemaObject? ReferenceSchemaObject
+        public ISchemaObject? ReferenceSchemaObject
         {
             get => _schema.ReferenceSchemaObject != null
                 ? _adapterProvider.CreateSchemaObjectAdapter(_schema.ReferenceSchemaObject) as SchemaObject
@@ -153,6 +156,13 @@ namespace SwaggerToCode.Adapters
 
         public List<ISchemaObjectField> Fields => _schema.Fields.Select(field =>
             _adapterProvider.CreateSchemaObjectFieldAdapter(field) as ISchemaObjectField).ToList();
+
+        public bool UpdateSchemaReferences(ISchemaObjectFinder finder)
+        {
+            return false;
+        }
+
+        public List<ISchemaObject> References { get; }
     }
 
     public class SchemaObjectFieldAdapter : ISchemaObjectField, TypeAdapter

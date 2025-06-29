@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swaggerToCode2", "swaggerTo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swaggerToCodeSerialisation", "swaggerToCodeSerialisation\swaggerToCodeSerialisation.csproj", "{623EFABE-CE9F-40AF-A6C8-574CDF742C2C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swaggerToCodeSerialisation.Tests", "swaggerToCodeSerialisation.Tests\swaggerToCodeSerialisation.Tests.csproj", "{78B228A4-265C-450F-A07D-76321B2E015F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swaggerToCodeAdapterUnitTests", "swaggerToCodeAdapterUnitTests\swaggerToCodeAdapterUnitTests.csproj", "{4B1546D4-7394-4A43-801B-E279B0E7808E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,13 @@ Global
 		{623EFABE-CE9F-40AF-A6C8-574CDF742C2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{623EFABE-CE9F-40AF-A6C8-574CDF742C2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{623EFABE-CE9F-40AF-A6C8-574CDF742C2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78B228A4-265C-450F-A07D-76321B2E015F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78B228A4-265C-450F-A07D-76321B2E015F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78B228A4-265C-450F-A07D-76321B2E015F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78B228A4-265C-450F-A07D-76321B2E015F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B1546D4-7394-4A43-801B-E279B0E7808E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B1546D4-7394-4A43-801B-E279B0E7808E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B1546D4-7394-4A43-801B-E279B0E7808E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B1546D4-7394-4A43-801B-E279B0E7808E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

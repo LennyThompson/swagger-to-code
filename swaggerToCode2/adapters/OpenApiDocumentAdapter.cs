@@ -118,13 +118,13 @@ namespace SwaggerToCode.Adapters
             set => _info.TermsOfService = value; 
         }
 
-        public ContactObject Contact 
+        public IContactObject Contact 
         { 
             get => _info.Contact; 
             set => _info.Contact = value; 
         }
 
-        public LicenseObject License 
+        public ILicenseObject License 
         { 
             get => _info.License; 
             set => _info.License = value; 
@@ -208,11 +208,11 @@ namespace SwaggerToCode.Adapters
             set => _server.Description = value; 
         }
 
-        public Dictionary<string, ServerVariableObject> Variables 
+        public Dictionary<string, IServerVariableObject> Variables 
         { 
             get => _server.Variables.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateServerVariableObjectAdapter(kvp.Value) as ServerVariableObject); 
+                    kvp => _adapterProvider.CreateServerVariableObjectAdapter(kvp.Value)); 
             set => _server.Variables = value; 
         }
     }
@@ -258,43 +258,43 @@ namespace SwaggerToCode.Adapters
             _adapterProvider = adapterProvider;
         }
 
-        public Dictionary<string, SchemaObject> Schemas 
+        public Dictionary<string, ISchemaObject> Schemas 
         { 
             get => _components.Schemas.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Value) as SchemaObject); 
+                    kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Value)); 
             set => _components.Schemas = value; 
         }
 
-        public Dictionary<string, ResponseObject> Responses 
+        public Dictionary<string, IResponseObject> Responses 
         { 
             get => _components.Responses.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateResponseObjectAdapter(kvp.Value) as ResponseObject); 
+                    kvp => _adapterProvider.CreateResponseObjectAdapter(kvp.Value)); 
             set => _components.Responses = value; 
         }
 
-        public Dictionary<string, ParameterObject> Parameters 
+        public Dictionary<string, IParameterObject> Parameters 
         { 
             get => _components.Parameters.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateParameterObjectAdapter(kvp.Value) as ParameterObject); 
+                    kvp => _adapterProvider.CreateParameterObjectAdapter(kvp.Value)); 
             set => _components.Parameters = value; 
         }
 
-        public Dictionary<string, RequestBodyObject> RequestBodies 
+        public Dictionary<string, IRequestBodyObject> RequestBodies 
         { 
             get => _components.RequestBodies.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateRequestBodyObjectAdapter(kvp.Value) as RequestBodyObject); 
+                    kvp => _adapterProvider.CreateRequestBodyObjectAdapter(kvp.Value)); 
             set => _components.RequestBodies = value; 
         }
 
-        public Dictionary<string, SecuritySchemeObject> SecuritySchemes 
+        public Dictionary<string, ISecuritySchemeObject> SecuritySchemes 
         { 
             get => _components.SecuritySchemes.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateSecuritySchemeObjectAdapter(kvp.Value) as SecuritySchemeObject); 
+                    kvp => _adapterProvider.CreateSecuritySchemeObjectAdapter(kvp.Value)); 
             set => _components.SecuritySchemes = value; 
         }
     }
@@ -346,38 +346,38 @@ namespace SwaggerToCode.Adapters
             set => _pathItem.Description = value; 
         }
 
-        public OperationObject Get 
+        public IOperationObject Get 
         { 
             get => _pathItem.Get != null ? 
                   _adapterProvider.CreateOperationObjectAdapter(_pathItem.Get) as OperationObject : null; 
             set => _pathItem.Get = value; 
         }
 
-        public OperationObject Put 
+        public IOperationObject Put 
         { 
             get => _pathItem.Put != null ? 
                   _adapterProvider.CreateOperationObjectAdapter(_pathItem.Put) as OperationObject : null; 
             set => _pathItem.Put = value; 
         }
 
-        public OperationObject Post 
+        public IOperationObject Post 
         { 
             get => _pathItem.Post != null ? 
                   _adapterProvider.CreateOperationObjectAdapter(_pathItem.Post) as OperationObject : null; 
             set => _pathItem.Post = value; 
         }
 
-        public OperationObject Delete 
+        public IOperationObject Delete 
         { 
             get => _pathItem.Delete != null ? 
                   _adapterProvider.CreateOperationObjectAdapter(_pathItem.Delete) as OperationObject : null; 
             set => _pathItem.Delete = value; 
         }
 
-        public List<ParameterObject> Parameters 
+        public List<IParameterObject>? Parameters 
         { 
             get => _pathItem.Parameters?.Select(param => 
-                  _adapterProvider.CreateParameterObjectAdapter(param) as ParameterObject).ToList(); 
+                  _adapterProvider.CreateParameterObjectAdapter(param)).ToList() ?? null; 
             set => _pathItem.Parameters = value; 
         }
     }
@@ -417,25 +417,25 @@ namespace SwaggerToCode.Adapters
             set => _operation.OperationId = value; 
         }
 
-        public List<ParameterObject> Parameters 
+        public List<IParameterObject>? Parameters 
         { 
             get => _operation.Parameters?.Select(param => 
-                  _adapterProvider.CreateParameterObjectAdapter(param) as ParameterObject).ToList(); 
+                  _adapterProvider.CreateParameterObjectAdapter(param)).ToList() ?? null; 
             set => _operation.Parameters = value; 
         }
 
-        public RequestBodyObject RequestBody 
+        public IRequestBodyObject RequestBody 
         { 
             get => _operation.RequestBody != null ? 
-                  _adapterProvider.CreateRequestBodyObjectAdapter(_operation.RequestBody) as RequestBodyObject : null; 
+                  _adapterProvider.CreateRequestBodyObjectAdapter(_operation.RequestBody) : null; 
             set => _operation.RequestBody = value; 
         }
 
-        public Dictionary<string, ResponseObject> Responses 
+        public Dictionary<string, IResponseObject> Responses 
         { 
             get => _operation.Responses.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateResponseObjectAdapter(kvp.Value) as ResponseObject); 
+                    kvp => _adapterProvider.CreateResponseObjectAdapter(kvp.Value)); 
             set => _operation.Responses = value; 
         }
 
@@ -481,10 +481,19 @@ namespace SwaggerToCode.Adapters
             set => _parameter.Required = value; 
         }
 
-        public SchemaObject Schema 
+        ISchemaObject IParameterObject.Schema
+        {
+            get => Schema;
+            set => Schema = value;
+        }
+
+        public object? Example { get => _parameter.Example; set => _parameter.Example = value; }
+        public Dictionary<string, IExampleObject>? Examples { get => _parameter.Examples; set => _parameter.Examples = value; }
+
+        public ISchemaObject Schema 
         { 
             get => _parameter.Schema != null ? 
-                  _adapterProvider.CreateSchemaObjectAdapter(_parameter.Schema) as SchemaObject : null; 
+                  _adapterProvider.CreateSchemaObjectAdapter(_parameter.Schema) : null; 
             set => _parameter.Schema = value; 
         }
     }
@@ -512,11 +521,11 @@ namespace SwaggerToCode.Adapters
             set => _requestBody.Required = value; 
         }
 
-        public Dictionary<string, MediaTypeObject> Content 
+        public Dictionary<string, IMediaTypeObject> Content 
         { 
             get => _requestBody.Content.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateMediaTypeObjectAdapter(kvp.Value) as MediaTypeObject); 
+                    kvp => _adapterProvider.CreateMediaTypeObjectAdapter(kvp.Value)); 
             set => _requestBody.Content = value; 
         }
     }
@@ -538,19 +547,19 @@ namespace SwaggerToCode.Adapters
             set => _response.Description = value; 
         }
 
-        public Dictionary<string, MediaTypeObject> Content 
+        public Dictionary<string, IMediaTypeObject> Content 
         { 
             get => _response.Content?.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateMediaTypeObjectAdapter(kvp.Value) as MediaTypeObject); 
+                    kvp => _adapterProvider.CreateMediaTypeObjectAdapter(kvp.Value)); 
             set => _response.Content = value; 
         }
 
-        public Dictionary<string, HeaderObject> Headers 
+        public Dictionary<string, IHeaderObject> Headers 
         { 
             get => _response.Headers?.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateHeaderObjectAdapter(kvp.Value) as HeaderObject); 
+                    kvp => _adapterProvider.CreateHeaderObjectAdapter(kvp.Value)); 
             set => _response.Headers = value; 
         }
     }
@@ -566,24 +575,24 @@ namespace SwaggerToCode.Adapters
             _adapterProvider = adapterProvider;
         }
 
-        public SchemaObject Schema 
+        public ISchemaObject Schema 
         { 
             get => _mediaType.Schema != null ? 
-                  _adapterProvider.CreateSchemaObjectAdapter(_mediaType.Schema) as SchemaObject : null; 
+                  _adapterProvider.CreateSchemaObjectAdapter(_mediaType.Schema) : null; 
             set => _mediaType.Schema = value; 
         }
 
-        public object Example 
+        public object? Example 
         { 
             get => _mediaType.Example; 
             set => _mediaType.Example = value; 
         }
 
-        public Dictionary<string, ExampleObject> Examples 
+        public Dictionary<string, IExampleObject>? Examples 
         { 
             get => _mediaType.Examples?.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateExampleObjectAdapter(kvp.Value) as ExampleObject); 
+                    kvp => _adapterProvider.CreateExampleObjectAdapter(kvp.Value)); 
             set => _mediaType.Examples = value; 
         }
     }
@@ -605,7 +614,7 @@ namespace SwaggerToCode.Adapters
             set => _header.Description = value; 
         }
 
-        public SchemaObject Schema 
+        public ISchemaObject Schema 
         { 
             get => _header.Schema != null ? 
                   _adapterProvider.CreateSchemaObjectAdapter(_header.Schema) as SchemaObject : null; 
@@ -696,7 +705,7 @@ namespace SwaggerToCode.Adapters
             set => _securityScheme.BearerFormat = value; 
         }
 
-        public OAuthFlowsObject Flows 
+        public IOAuthFlowsObject Flows 
         { 
             get => _securityScheme.Flows != null ? 
                   _adapterProvider.CreateOAuthFlowsObjectAdapter(_securityScheme.Flows) as OAuthFlowsObject : null; 
@@ -715,31 +724,31 @@ namespace SwaggerToCode.Adapters
             _adapterProvider = adapterProvider;
         }
 
-        public OAuthFlowObject Implicit 
+        public IOAuthFlowObject Implicit 
         { 
             get => _oAuthFlows.Implicit != null ? 
-                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.Implicit) as OAuthFlowObject : null; 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.Implicit) as IOAuthFlowObject : null; 
             set => _oAuthFlows.Implicit = value; 
         }
 
-        public OAuthFlowObject Password 
+        public IOAuthFlowObject Password 
         { 
             get => _oAuthFlows.Password != null ? 
-                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.Password) as OAuthFlowObject : null; 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.Password) as IOAuthFlowObject : null; 
             set => _oAuthFlows.Password = value; 
         }
 
-        public OAuthFlowObject ClientCredentials 
+        public IOAuthFlowObject ClientCredentials 
         { 
             get => _oAuthFlows.ClientCredentials != null ? 
-                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.ClientCredentials) as OAuthFlowObject : null; 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.ClientCredentials) as IOAuthFlowObject : null; 
             set => _oAuthFlows.ClientCredentials = value; 
         }
 
-        public OAuthFlowObject AuthorizationCode 
+        public IOAuthFlowObject AuthorizationCode 
         { 
             get => _oAuthFlows.AuthorizationCode != null ? 
-                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.AuthorizationCode) as OAuthFlowObject : null; 
+                  _adapterProvider.CreateOAuthFlowObjectAdapter(_oAuthFlows.AuthorizationCode) as IOAuthFlowObject : null; 
             set => _oAuthFlows.AuthorizationCode = value; 
         }
     }
@@ -803,10 +812,10 @@ namespace SwaggerToCode.Adapters
             set => _tag.Description = value; 
         }
 
-        public ExternalDocumentationObject ExternalDocs 
+        public IExternalDocumentationObject ExternalDocs 
         { 
             get => _tag.ExternalDocs != null ? 
-                  _adapterProvider.CreateExternalDocumentationObjectAdapter(_tag.ExternalDocs) as ExternalDocumentationObject : null; 
+                  _adapterProvider.CreateExternalDocumentationObjectAdapter(_tag.ExternalDocs) : null; 
             set => _tag.ExternalDocs = value; 
         }
     }

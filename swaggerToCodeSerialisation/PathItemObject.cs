@@ -9,15 +9,15 @@ namespace OpenApi.Models
 
         [YamlMember(Alias = "description")] public string Description { get; set; }
 
-        [YamlMember(Alias = "get")] public OperationObject Get { get; set; }
+        [YamlMember(Alias = "get")] public IOperationObject Get { get; set; }
 
-        [YamlMember(Alias = "put")] public OperationObject Put { get; set; }
+        [YamlMember(Alias = "put")] public IOperationObject Put { get; set; }
 
-        [YamlMember(Alias = "post")] public OperationObject Post { get; set; }
+        [YamlMember(Alias = "post")] public IOperationObject Post { get; set; }
 
-        [YamlMember(Alias = "delete")] public OperationObject Delete { get; set; }
+        [YamlMember(Alias = "delete")] public IOperationObject Delete { get; set; }
 
-        [YamlMember(Alias = "parameters")] public List<ParameterObject> Parameters { get; set; }
+        [YamlMember(Alias = "parameters")] public List<IParameterObject> Parameters { get; set; }
     }
 
     public class OperationObject : IOperationObject
@@ -35,13 +35,13 @@ namespace OpenApi.Models
         public string OperationId { get; set; }
 
         [YamlMember(Alias = "parameters")]
-        public List<ParameterObject> Parameters { get; set; }
+        public List<IParameterObject> Parameters { get; set; }
 
         [YamlMember(Alias = "requestBody")]
-        public RequestBodyObject RequestBody { get; set; }
+        public IRequestBodyObject RequestBody { get; set; }
 
         [YamlMember(Alias = "responses")]
-        public Dictionary<string, ResponseObject> Responses { get; set; }
+        public Dictionary<string, IResponseObject> Responses { get; set; }
 
         [YamlMember(Alias = "security")]
         public List<Dictionary<string, List<string>>> Security { get; set; }
@@ -62,7 +62,11 @@ namespace OpenApi.Models
         public bool Required { get; set; }
 
         [YamlMember(Alias = "schema")]
-        public SchemaObject Schema { get; set; }
+        public ISchemaObject Schema { get; set; }
+        [YamlMember(Alias = "example")]
+        public object? Example { get; set; }
+
+        public Dictionary<string, IExampleObject>? Examples { get; set; }
     }
 
     public class RequestBodyObject : IRequestBodyObject
@@ -74,7 +78,7 @@ namespace OpenApi.Models
         public bool Required { get; set; }
 
         [YamlMember(Alias = "content")]
-        public Dictionary<string, MediaTypeObject> Content { get; set; }
+        public Dictionary<string, IMediaTypeObject> Content { get; set; }
     }
 
     public class ResponseObject : IResponseObject
@@ -83,10 +87,10 @@ namespace OpenApi.Models
         public string Description { get; set; }
 
         [YamlMember(Alias = "content")]
-        public Dictionary<string, MediaTypeObject> Content { get; set; }
+        public Dictionary<string, IMediaTypeObject> Content { get; set; }
 
         [YamlMember(Alias = "headers")]
-        public Dictionary<string, HeaderObject> Headers { get; set; }
+        public Dictionary<string, IHeaderObject> Headers { get; set; }
     }
 
 }

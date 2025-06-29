@@ -73,7 +73,7 @@ public class VendorExtensionNodeDeserializer : INodeDeserializer
 
     public bool Deserialize(IParser reader, Type expectedType, Func<IParser, Type, object?> nestedObjectDeserializer, out object? value, ObjectDeserializer objectDeserializer)
     {
-        if (expectedType != typeof(SchemaObject))
+        if (expectedType != typeof(ISchemaObject))
         {
             return _innerDeserializer.Deserialize(reader, expectedType, nestedObjectDeserializer, out value, objectDeserializer);
         }

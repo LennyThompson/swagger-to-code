@@ -43,12 +43,6 @@ namespace OpenApi.Models
             };
         }
 
-        /// <summary>
-        /// Creates an instance of the specified type.
-        /// Overrides the base implementation to handle OpenAPI interfaces.
-        /// </summary>
-        /// <param name="type">The type to create.</param>
-        /// <returns>A new instance of the specified type.</returns>
         public override object Create(Type type)
         {
             // Check if we're dealing with an interface from our map

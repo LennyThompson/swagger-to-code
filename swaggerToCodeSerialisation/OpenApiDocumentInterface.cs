@@ -18,14 +18,18 @@ namespace OpenApi.Models
         bool UpdateSchemaReferences();
     }
 
+    public interface ISchemaObjectFinder
+    {
+        ISchemaObject? FindSchemaByReference(string strRef);
+    }
     public interface IInfoObject
     {
         string Title { get; set; }
         string Description { get; set; }
         string Version { get; set; }
         string TermsOfService { get; set; }
-        ContactObject Contact { get; set; }
-        LicenseObject License { get; set; }
+        IContactObject Contact { get; set; }
+        ILicenseObject License { get; set; }
     }
 
     public interface IContactObject
@@ -45,7 +49,7 @@ namespace OpenApi.Models
     {
         string Url { get; set; }
         string Description { get; set; }
-        Dictionary<string, ServerVariableObject> Variables { get; set; }
+        Dictionary<string, IServerVariableObject> Variables { get; set; }
     }
 
     public interface IServerVariableObject
@@ -57,11 +61,11 @@ namespace OpenApi.Models
 
     public interface IComponentsObject
     {
-        Dictionary<string, SchemaObject> Schemas { get; set; }
-        Dictionary<string, ResponseObject> Responses { get; set; }
-        Dictionary<string, ParameterObject> Parameters { get; set; }
-        Dictionary<string, RequestBodyObject> RequestBodies { get; set; }
-        Dictionary<string, SecuritySchemeObject> SecuritySchemes { get; set; }
+        Dictionary<string, ISchemaObject> Schemas { get; set; }
+        Dictionary<string, IResponseObject> Responses { get; set; }
+        Dictionary<string, IParameterObject> Parameters { get; set; }
+        Dictionary<string, IRequestBodyObject> RequestBodies { get; set; }
+        Dictionary<string, ISecuritySchemeObject> SecuritySchemes { get; set; }
     }
 
     public interface ISchemaObject
@@ -69,25 +73,30 @@ namespace OpenApi.Models
         string Ref { get; set; }
         string Type { get; set; }
         string Format { get; set; }
-        Dictionary<string, SchemaObject> Properties { get; set; }
-        SchemaObject Items { get; set; }
+        Dictionary<string, ISchemaObject>? Properties { get; set; }
+        ISchemaObject? Items { get; set; }
         List<string> Required { get; set; }
         List<string> Enum { get; set; }
-        List<SchemaObject> AllOf { get; set; }
-        List<SchemaObject> OneOf { get; set; }
-        List<SchemaObject> AnyOf { get; set; }
+        List<ISchemaObject>? AllOf { get; set; }
+        List<ISchemaObject>? OneOf { get; set; }
+        List<ISchemaObject>? AnyOf { get; set; }
         string Description { get; set; }
         object Default { get; set; }
         object AdditionalProperties { get; set; }
         DiscriminatorObject Discriminator { get; set; }
-        Dictionary<string, object> VendorExtensions { get; }
+        Dictionary<string, object>? VendorExtensions { get; }
+        public object? Example { get; set; }
+        public Dictionary<string, IExampleObject>? Examples { get; set; }
         object this[string key] { get; set; }
         string Name { get; set; }
         bool IsReference { get; }
         bool IsSimpleType { get; }
         bool IsArrayType { get; }
-        SchemaObject? ReferenceSchemaObject { get; set; }
-        List<ISchemaObjectField> Fields { get; }
+        bool IsObjectType { get; }
+        ISchemaObject? ReferenceSchemaObject { get; set; }
+        List<ISchemaObjectField>? Fields { get; }
+        bool UpdateSchemaReferences(ISchemaObjectFinder finder);
+        List<ISchemaObject> References { get; }
     }
 
     public interface ISchemaObjectField
@@ -107,11 +116,11 @@ namespace OpenApi.Models
     {
         string Summary { get; set; }
         string Description { get; set; }
-        OperationObject Get { get; set; }
-        OperationObject Put { get; set; }
-        OperationObject Post { get; set; }
-        OperationObject Delete { get; set; }
-        List<ParameterObject> Parameters { get; set; }
+        IOperationObject Get { get; set; }
+        IOperationObject Put { get; set; }
+        IOperationObject Post { get; set; }
+        IOperationObject Delete { get; set; }
+        List<IParameterObject> Parameters { get; set; }
     }
 
     public interface IOperationObject
@@ -120,9 +129,9 @@ namespace OpenApi.Models
         string Summary { get; set; }
         string Description { get; set; }
         string OperationId { get; set; }
-        List<ParameterObject> Parameters { get; set; }
-        RequestBodyObject RequestBody { get; set; }
-        Dictionary<string, ResponseObject> Responses { get; set; }
+        List<IParameterObject> Parameters { get; set; }
+        IRequestBodyObject RequestBody { get; set; }
+        Dictionary<string, IResponseObject> Responses { get; set; }
         List<Dictionary<string, List<string>>> Security { get; set; }
     }
 
@@ -132,34 +141,36 @@ namespace OpenApi.Models
         string In { get; set; }
         string Description { get; set; }
         bool Required { get; set; }
-        SchemaObject Schema { get; set; }
+        ISchemaObject Schema { get; set; }
+        public object? Example { get; set; }
+        public Dictionary<string, IExampleObject>? Examples { get; set; }
     }
 
     public interface IRequestBodyObject
     {
         string Description { get; set; }
         bool Required { get; set; }
-        Dictionary<string, MediaTypeObject> Content { get; set; }
+        Dictionary<string, IMediaTypeObject> Content { get; set; }
     }
 
     public interface IResponseObject
     {
         string Description { get; set; }
-        Dictionary<string, MediaTypeObject> Content { get; set; }
-        Dictionary<string, HeaderObject> Headers { get; set; }
+        Dictionary<string, IMediaTypeObject> Content { get; set; }
+        Dictionary<string, IHeaderObject> Headers { get; set; }
     }
 
     public interface IMediaTypeObject
     {
-        SchemaObject Schema { get; set; }
+        ISchemaObject Schema { get; set; }
         object Example { get; set; }
-        Dictionary<string, ExampleObject> Examples { get; set; }
+        Dictionary<string, IExampleObject> Examples { get; set; }
     }
 
     public interface IHeaderObject
     {
         string Description { get; set; }
-        SchemaObject Schema { get; set; }
+        ISchemaObject Schema { get; set; }
     }
 
     public interface IExampleObject
@@ -178,15 +189,15 @@ namespace OpenApi.Models
         string In { get; set; }
         string Scheme { get; set; }
         string BearerFormat { get; set; }
-        OAuthFlowsObject Flows { get; set; }
+        IOAuthFlowsObject Flows { get; set; }
     }
 
     public interface IOAuthFlowsObject
     {
-        OAuthFlowObject Implicit { get; set; }
-        OAuthFlowObject Password { get; set; }
-        OAuthFlowObject ClientCredentials { get; set; }
-        OAuthFlowObject AuthorizationCode { get; set; }
+        IOAuthFlowObject Implicit { get; set; }
+        IOAuthFlowObject Password { get; set; }
+        IOAuthFlowObject ClientCredentials { get; set; }
+        IOAuthFlowObject AuthorizationCode { get; set; }
     }
 
     public interface IOAuthFlowObject
@@ -201,7 +212,7 @@ namespace OpenApi.Models
     {
         string Name { get; set; }
         string Description { get; set; }
-        ExternalDocumentationObject ExternalDocs { get; set; }
+        IExternalDocumentationObject ExternalDocs { get; set; }
     }
 
     public interface IExternalDocumentationObject

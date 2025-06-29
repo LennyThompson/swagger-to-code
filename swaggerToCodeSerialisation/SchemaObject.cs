@@ -17,10 +17,10 @@ namespace OpenApi.Models
         public string Format { get; set; }
 
         [YamlMember(Alias = "properties")]
-        public Dictionary<string, SchemaObject> Properties { get; set; }
+        public Dictionary<string, ISchemaObject>? Properties { get; set; }
 
         [YamlMember(Alias = "items")]
-        public SchemaObject Items { get; set; }
+        public ISchemaObject? Items { get; set; }
 
         [YamlMember(Alias = "required")]
         public List<string> Required { get; set; }
@@ -29,13 +29,13 @@ namespace OpenApi.Models
         public List<string> Enum { get; set; }
 
         [YamlMember(Alias = "allOf")]
-        public List<SchemaObject> AllOf { get; set; }
+        public List<ISchemaObject>? AllOf { get; set; }
 
         [YamlMember(Alias = "oneOf")]
-        public List<SchemaObject> OneOf { get; set; }
+        public List<ISchemaObject>? OneOf { get; set; }
 
         [YamlMember(Alias = "anyOf")]
-        public List<SchemaObject> AnyOf { get; set; }
+        public List<ISchemaObject>? AnyOf { get; set; }
 
         [YamlMember(Alias = "description")]
         public string Description { get; set; }
@@ -49,6 +49,12 @@ namespace OpenApi.Models
         [YamlMember(Alias = "discriminator")]
         public DiscriminatorObject Discriminator { get; set; }
         
+        [YamlMember(Alias = "example")]
+        public object? Example { get; set; }
+
+        [YamlMember(Alias = "examples")]
+        public Dictionary<string, IExampleObject>? Examples { get; set; }
+    
         [YamlIgnore] public Dictionary<string, object> VendorExtensions => _vendorExtensions;
 
         [YamlIgnore] public object this[string key]
@@ -64,31 +70,115 @@ namespace OpenApi.Models
         }
 
         [YamlIgnore] public string Name { get; set; }
+        [YamlIgnore] public bool IsObjectType => Type == "object" || (IsArrayType && Items?.IsObjectType == true);
         [YamlIgnore] public bool IsReference => ReferenceSchemaObject != null || !string.IsNullOrEmpty(Ref);
         [YamlIgnore] public bool IsSimpleType => Type == "string" || Type == "number" || Type == "integer" || Type == "boolean"; // TODO or Type != "object";???
-        [YamlIgnore] public SchemaObject? ReferenceSchemaObject { get; set; }
+        [YamlIgnore] public ISchemaObject? ReferenceSchemaObject { get; set; }
         [YamlIgnore] public List<ISchemaObjectField> Fields => IsReference ? 
             ReferenceSchemaObject.Fields : 
-            Properties?.Keys.Select(propName => new SchemaObjectField(this, propName, Properties[propName]) as ISchemaObjectField).ToList() ?? new List<ISchemaObjectField>();
+            Properties?.Select(property => new SchemaObjectField(this, property.Key, property.Value) as ISchemaObjectField).ToList() ?? new List<ISchemaObjectField>();
+
+        public bool UpdateSchemaReferences(ISchemaObjectFinder finder)
+        {
+            if (IsReference)
+            {
+                ReferenceSchemaObject = finder.FindSchemaByReference(Ref);
+            }
+            else if (IsArrayType && Items != null)
+            {
+                Items.UpdateSchemaReferences(finder);
+            }
+            
+            if (OneOf != null && OneOf.Count > 0)
+            {
+                foreach (ISchemaObject schemaOf in OneOf)
+                {
+                    schemaOf.UpdateSchemaReferences(finder);
+                }
+            }
+            if (AnyOf != null && AnyOf.Count > 0)
+            {
+                foreach (ISchemaObject schemaOf in AnyOf)
+                {
+                    schemaOf.UpdateSchemaReferences(finder);
+                }
+            }
+            if (AllOf != null && AllOf.Count > 0)
+            {
+                foreach (ISchemaObject schemaOf in AllOf)
+                {
+                    schemaOf.UpdateSchemaReferences(finder);
+                }
+            }
+
+            if (Properties != null)
+            {
+                foreach (var property in Properties)
+                {
+                    property.Value.UpdateSchemaReferences(finder);
+                }
+
+            }
+
+            return true;
+        }
 
         [YamlIgnore] public bool IsArrayType => Type == "array";
+
+        [YamlIgnore]
+        public List<ISchemaObject> References
+        {
+            get
+            {
+                List<ISchemaObject> listReferences = new List<ISchemaObject>();
+                if (IsReference)
+                {
+                    listReferences.Add(this);
+                }
+
+                if (IsArrayType && Items?.IsReference == true)
+                {
+                    listReferences.Add(this);
+                }
+                listReferences.AddRange
+                (
+                    Properties?.Values.SelectMany(prop => prop.References).ToList() ?? new List<ISchemaObject>()
+                );
+                if (AnyOf?.Any(schemaObj => schemaObj.IsReference) ?? false)
+                {
+                    listReferences.AddRange(AnyOf.SelectMany(anyOf => anyOf.References).ToList());
+                }
+                if(AllOf?.Any(schemaObj => schemaObj.IsReference) ?? false)
+                {
+                    listReferences.AddRange(AllOf.SelectMany(anyOf => anyOf.References).ToList());
+                }
+                if(OneOf?.Any(schemaObj => schemaObj.IsReference) ?? false)
+                {
+                    listReferences.AddRange(OneOf.SelectMany(anyOf => anyOf.References).ToList());
+                }
+
+                return listReferences;
+            }
+        }
     }
 
     public class SchemaObjectField : ISchemaObjectField
     {
-        private SchemaObject _parent;
-        private SchemaObject _field;
+        private ISchemaObject _parent;
+        private ISchemaObject _field;
         private string _strName;
-        public SchemaObjectField(SchemaObject objParent, string strName, SchemaObject property)
+        public SchemaObjectField(ISchemaObject objParent, string strName, ISchemaObject property)
         {
             _parent = objParent;
             _strName = strName;
             _field = property;
         }
-
+        
         public ISchemaObject Parent => _parent;
         public string Name => _strName;
         public ISchemaObject Field => _field;
+
+        public List<ISchemaObject>? References => _field.References;
     }
 
 }
