@@ -166,7 +166,6 @@ namespace SwaggerToCode.Services
                 }
 
                 // Update schema references
-                document.UpdateSchemaReferences();
                 document.SwaggerFile = swaggerFile;
 
                 // Add to collections

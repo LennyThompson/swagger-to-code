@@ -11,6 +11,7 @@ namespace SwaggerToCode.Adapters
     {
         private readonly IOpenApiDocument _document;
         private readonly AdapterProvider _adapterProvider;
+        private Dictionary<string, ISchemaObject> _mapSchemaObjects;
 
         public OpenApiDocumentAdapter(IOpenApiDocument document, AdapterProvider adapterProvider)
         {
@@ -77,9 +78,9 @@ namespace SwaggerToCode.Adapters
             set => _document.SwaggerFile = value; 
         }
 
-        public bool UpdateSchemaReferences()
+        private ISchemaObject FindSchemaRef(string strSchema)
         {
-            return _document.UpdateSchemaReferences();
+            return Components.Schemas.Values.FirstOrDefault(schema => schema.Name == strSchema);
         }
     }
 
@@ -262,7 +263,7 @@ namespace SwaggerToCode.Adapters
         { 
             get => _components.Schemas.ToDictionary(
                     kvp => kvp.Key,
-                    kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Value)); 
+                    kvp => _adapterProvider.CreateSchemaObjectAdapter(kvp.Key, kvp.Value)); 
             set => _components.Schemas = value; 
         }
 
@@ -493,7 +494,7 @@ namespace SwaggerToCode.Adapters
         public ISchemaObject Schema 
         { 
             get => _parameter.Schema != null ? 
-                  _adapterProvider.CreateSchemaObjectAdapter(_parameter.Schema) : null; 
+                  _adapterProvider.CreateSchemaObjectAdapter(Name, _parameter.Schema) : null; 
             set => _parameter.Schema = value; 
         }
     }
@@ -578,7 +579,7 @@ namespace SwaggerToCode.Adapters
         public ISchemaObject Schema 
         { 
             get => _mediaType.Schema != null ? 
-                  _adapterProvider.CreateSchemaObjectAdapter(_mediaType.Schema) : null; 
+                  _adapterProvider.CreateSchemaObjectAdapter("", _mediaType.Schema) : null; 
             set => _mediaType.Schema = value; 
         }
 
@@ -617,7 +618,7 @@ namespace SwaggerToCode.Adapters
         public ISchemaObject Schema 
         { 
             get => _header.Schema != null ? 
-                  _adapterProvider.CreateSchemaObjectAdapter(_header.Schema) as SchemaObject : null; 
+                  _adapterProvider.CreateSchemaObjectAdapter("", _header.Schema) as SchemaObject : null; 
             set => _header.Schema = value; 
         }
     }

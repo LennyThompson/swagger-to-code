@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using OpenApi.Models;
+using swagger.utils.converters;
 using SwaggerToCode.Adapters;
 using SwaggerToCode.Models;
 using SwaggerToCode.Services;
@@ -32,7 +33,7 @@ public class TypeAdapterProviderImpl : TypeAdapterProvider
                     strName, 
                     schemaObj.Type, 
                     schemaObj.Format,
-                    (string strName) => { return new CamelToPascalCaseAdapter(new SnakeToCamelCaseAdapter(strName)); }, 
+                    (string strName) => new CamelToPascalCaseAdapter(new SnakeToCamelCaseAdapter(strName)), 
                     schemaObj
                 );
             default:

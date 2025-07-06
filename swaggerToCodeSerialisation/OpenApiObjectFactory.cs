@@ -25,7 +25,6 @@ namespace OpenApi.Models
                 { typeof(IServerVariableObject), typeof(ServerVariableObject) },
                 { typeof(IComponentsObject), typeof(ComponentsObject) },
                 { typeof(ISchemaObject), typeof(SchemaObject) },
-                { typeof(ISchemaObjectField), typeof(SchemaObjectField) },
                 { typeof(IDiscriminatorObject), typeof(DiscriminatorObject) },
                 { typeof(IPathItemObject), typeof(PathItemObject) },
                 { typeof(IOperationObject), typeof(OperationObject) },

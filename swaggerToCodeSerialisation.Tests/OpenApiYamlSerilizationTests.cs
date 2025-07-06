@@ -389,7 +389,6 @@ paths:
         {
             // Act
             var result = OpenApiYamlSerializer.DeserializeFromYaml(_complexWabulatorYaml);
-            result.UpdateSchemaReferences();
             
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -398,20 +397,12 @@ paths:
             var detailsList = result.Components.Schemas["WabulatorDetailsList"];
             var detailsProperty = detailsList.Properties["wabulatorDetails"];
             Assert.That(detailsProperty.Items, Is.Not.Null);
-            Assert.That(detailsProperty.Items.IsReference, Is.True);
             Assert.That(detailsProperty.Items.Ref, Is.EqualTo("#/components/schemas/WabulatorDetails"));
-            
-            // After updating references, we should be able to navigate to the referenced schema
-            Assert.That(detailsProperty.Items.ReferenceSchemaObject, Is.Not.Null);
-            Assert.That(detailsProperty.Items.ReferenceSchemaObject.Name, Is.EqualTo("WabulatorDetails"));
             
             // Check that nested references are also resolved
             var wabulatorDetails = result.Components.Schemas["WabulatorDetails"];
             var wabettesProperty = wabulatorDetails.Properties["wabettes"];
             Assert.That(wabettesProperty.Items, Is.Not.Null);
-            Assert.That(wabettesProperty.Items.IsReference, Is.True);
-            Assert.That(wabettesProperty.Items.ReferenceSchemaObject, Is.Not.Null);
-            Assert.That(wabettesProperty.Items.ReferenceSchemaObject.Name, Is.EqualTo("WabetteDetails"));
         }
         
         [Test]
@@ -616,7 +607,6 @@ components:
 
             // Act
             var result = OpenApiYamlSerializer.DeserializeFromYaml(yamlContent);
-            result.UpdateSchemaReferences();
             
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -640,10 +630,7 @@ components:
             var mongoProperty = wabConfig.Properties["mongo"];
             Assert.That(mongoProperty.AllOf, Is.Not.Null);
             Assert.That(mongoProperty.AllOf.Count, Is.EqualTo(1));
-            Assert.That(mongoProperty.AllOf[0].IsReference, Is.True);
             Assert.That(mongoProperty.AllOf[0].Ref, Is.EqualTo("#/components/schemas/MongoConfig"));
-            Assert.That(mongoProperty.AllOf[0].ReferenceSchemaObject, Is.Not.Null);
-            Assert.That(mongoProperty.AllOf[0].ReferenceSchemaObject.Name, Is.EqualTo("MongoConfig"));
         }
     }
 }

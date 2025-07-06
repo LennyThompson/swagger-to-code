@@ -9,7 +9,8 @@ public class AdapterProviderImpl : AdapterProvider
     private readonly TypeAdapterProvider _typeAdapterProvider;
     private readonly TemplateConfigContextProvider _templateContextProvider;
     private readonly ILogger<AdapterProviderImpl> _logger;
-    
+    private IOpenApiDocument? _documentCurr;
+
     public AdapterProviderImpl
     (
         TypeAdapterProvider typeAdapterProvider, 
@@ -25,6 +26,7 @@ public class AdapterProviderImpl : AdapterProvider
     
     public IOpenApiDocument CreateOpenApiDocumentAdapter(IOpenApiDocument document)
     {
+        _documentCurr = document;
         return new OpenApiDocumentAdapter(document, this);
     }
 
@@ -58,14 +60,21 @@ public class AdapterProviderImpl : AdapterProvider
         return new ComponentsObjectAdapter(components, this);
     }
 
-    public ISchemaObject CreateSchemaObjectAdapter(ISchemaObject schema)
+    public ISchemaObject CreateSchemaObjectAdapter(string strName, ISchemaObject schema)
     {
-        return new SchemaObjectAdapter(schema, this, _typeAdapterProvider, _templateContextProvider.CurrentTemplateConfig);
+        
+        var adapter = new SchemaObjectAdapter(schema, this, _typeAdapterProvider, _templateContextProvider.CurrentTemplateConfig);
+        adapter.Name = strName;
+        return adapter;
     }
 
-    public ISchemaObjectField CreateSchemaObjectFieldAdapter(ISchemaObjectField field)
+    public ISchemaObjectField CreateSchemaObjectFieldAdapter
+    (
+        string name, 
+        ISchemaObject property
+    )
     {
-        return new SchemaObjectFieldAdapter(field, this, _typeAdapterProvider, _templateContextProvider.CurrentTemplateConfig);
+        return new SchemaObjectFieldAdapter(name, property, this, _typeAdapterProvider, _templateContextProvider.CurrentTemplateConfig);
     }
 
     public IDiscriminatorObject CreateDiscriminatorObjectAdapter(IDiscriminatorObject discriminator)
@@ -137,4 +146,17 @@ public class AdapterProviderImpl : AdapterProvider
     {
         return new ExternalDocumentationObjectAdapter(externalDocs, this);
     }
+    
+    public ISchemaObject? FindSchemaByReference(string strRef)
+    {
+        if (strRef.StartsWith("#/components/schemas/"))
+        {
+            var schameName = strRef.Substring("#/components/schemas/".Length);
+            return _documentCurr?.Components.Schemas.GetValueOrDefault(schameName) ?? null;
+        }
+
+        return null;
+    }
+
+    
 }

@@ -25,7 +25,7 @@ public class SchemaObjectCodeGenerator : CodeGeneratorImpl
     {
         foreach (var generateSchemaObj in _templateConfigContextProvider.CurrentOpenApiDocument.Components.Schemas.Select(model =>
                      new OpenApiGenerateTarget(model.Key, _templateConfigContextProvider.CurrentOpenApiDocument,
-                         _adapterProvider.CreateSchemaObjectAdapter(model.Value))))
+                         _adapterProvider.CreateSchemaObjectAdapter(model.Key, model.Value))))
         {
             Generate(generateSchemaObj);
         }

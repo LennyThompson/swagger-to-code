@@ -15,7 +15,6 @@ namespace OpenApi.Models
         List<ITagObject> Tags { get; set; }
         IExternalDocumentationObject ExternalDocs { get; set; }
         string SwaggerFile { get; set; }
-        bool UpdateSchemaReferences();
     }
 
     public interface ISchemaObjectFinder
@@ -70,38 +69,30 @@ namespace OpenApi.Models
 
     public interface ISchemaObject
     {
-        string Ref { get; set; }
-        string Type { get; set; }
-        string Format { get; set; }
+        string? Ref { get; set; }
+        string? Type { get; set; }
+        public SchemaObjectType ObjectType { get; set; }
+        string? Format { get; set; }
         Dictionary<string, ISchemaObject>? Properties { get; set; }
         ISchemaObject? Items { get; set; }
-        List<string> Required { get; set; }
-        List<string> Enum { get; set; }
+        List<string>? Required { get; set; }
+        List<string>? Enum { get; set; }
         List<ISchemaObject>? AllOf { get; set; }
         List<ISchemaObject>? OneOf { get; set; }
         List<ISchemaObject>? AnyOf { get; set; }
-        string Description { get; set; }
-        object Default { get; set; }
-        object AdditionalProperties { get; set; }
-        DiscriminatorObject Discriminator { get; set; }
+        string? Description { get; set; }
+        object? Default { get; set; }
+        object? AdditionalProperties { get; set; }
+        IDiscriminatorObject? Discriminator { get; set; }
         Dictionary<string, object>? VendorExtensions { get; }
         public object? Example { get; set; }
         public Dictionary<string, IExampleObject>? Examples { get; set; }
-        object this[string key] { get; set; }
-        string Name { get; set; }
-        bool IsReference { get; }
-        bool IsSimpleType { get; }
-        bool IsArrayType { get; }
-        bool IsObjectType { get; }
-        ISchemaObject? ReferenceSchemaObject { get; set; }
-        List<ISchemaObjectField>? Fields { get; }
-        bool UpdateSchemaReferences(ISchemaObjectFinder finder);
-        List<ISchemaObject> References { get; }
+        object? this[string key] { get; set; }
+        string? Name { get; set; }
     }
 
     public interface ISchemaObjectField
     {
-        ISchemaObject Parent { get; }
         string Name { get; }
         ISchemaObject Field { get; }
     }

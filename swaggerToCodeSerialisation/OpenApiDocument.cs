@@ -4,7 +4,7 @@ using YamlDotNet.Serialization;
 
 namespace OpenApi.Models
 {
-    public class OpenApiDocument : IOpenApiDocument, ISchemaObjectFinder
+    public class OpenApiDocument : IOpenApiDocument
     {
         [YamlMember(Alias = "openapi")]
         public string OpenApi { get; set; }
@@ -33,81 +33,6 @@ namespace OpenApi.Models
         [YamlIgnore]
         public string SwaggerFile { get; set; }
 
-        public bool UpdateSchemaReferences()
-        {
-            if (Paths == null || Components?.Schemas == null)
-            {
-                return false;
-            }
-            
-            foreach(KeyValuePair<string, ISchemaObject> schemaEntry in Components.Schemas)
-            {
-                if (!schemaEntry.Value.IsReference)
-                {
-                    schemaEntry.Value.Name = schemaEntry.Key;
-                }
-            }
-
-            // Get all schema references from paths using LINQ
-            var schemaReferences = Paths.Values
-                .SelectMany(path => new[]
-                {
-                    // Path parameters
-                    path.Parameters?.SelectMany(p => new[] { p.Schema }),
-                    
-                    // Operations (GET, POST, PUT, DELETE)
-                    new[] { path.Get, path.Post, path.Put, path.Delete }
-                        .Where(op => op != null)
-                        .SelectMany(op => new[]
-                        {
-                            // Operation parameters
-                            op.Parameters?.SelectMany(p => new[] { p.Schema }),
-                            
-                            // Request body schemas
-                            op.RequestBody?.Content?.Values
-                                .Select(c => c.Schema),
-                                
-                            // Response schemas
-                            op.Responses?.Values
-                                .SelectMany(r => r.Content?.Values
-                                    .Select(c => c.Schema) ?? Array.Empty<SchemaObject>())
-                        })
-                        .SelectMany(x => x ?? Array.Empty<SchemaObject>())
-                })
-                .SelectMany(x => x ?? Array.Empty<SchemaObject>())
-                .Where(schema => schema != null && schema.IsReference);
-
-            foreach (var schemaObject in schemaReferences)
-            {
-                schemaObject.UpdateSchemaReferences(this);
-            }
-            UpdateSchemaObjectReferences();
-            return true;
-        }
-
-        private bool UpdateSchemaObjectReferences()
-        {
-            foreach (var schemaObj in Components.Schemas)
-            {
-                schemaObj.Value.UpdateSchemaReferences(this);
-            }
-            return true;
-            
-        }
-
-        public ISchemaObject? FindSchemaByReference(string strRef)
-        {
-            if (strRef.StartsWith("#/components/schemas/"))
-            {
-                var schameName = strRef.Substring("#/components/schemas/".Length);
-                if (Components.Schemas.TryGetValue(schameName, out var schemaObj))
-                {
-                    return schemaObj;
-                }
-            }
-
-            return null;
-        }
     }
 
     public class InfoObject : IInfoObject
